@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Romania: A Wine Master's Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .title-font {
+            font-family: 'Lora', serif;
+        }
+        .modal {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease;
+        }
+        .flashcard-container {
+            perspective: 1000px;
+        }
+        .flashcard {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flashcard.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+        .timeline-item.correct {
+            border-left: 4px solid #4ade80; /* green-400 */
+        }
+        .timeline-item.incorrect {
+            border-left: 4px solid #f87171; /* red-400 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+
+        <!-- Main Menu Screen -->
+        <div id="main-menu" class="w-full max-w-4xl text-center">
+            <h1 class="title-font text-4xl md:text-6xl font-bold text-purple-300 mb-2">Romania</h1>
+            <h2 class="title-font text-2xl md:text-4xl font-bold mb-8">A Wine Master's Challenge</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <button data-module="historian" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    <h3 class="text-xl font-bold">The Historian's Scroll</h3>
+                </button>
+                <button data-module="terroir" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    <h3 class="text-xl font-bold">The Terroir Architect</h3>
+                </button>
+                <button data-module="ampelographer" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    <h3 class="text-xl font-bold">The Ampelographer's Challenge</h3>
+                </button>
+                <button data-module="law" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    <h3 class="text-xl font-bold">The Lawmaker's Desk</h3>
+                </button>
+                <button data-module="gastronomy" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    <h3 class="text-xl font-bold">The Gastronome's Table</h3>
+                </button>
+                <button data-module="critic" class="module-btn bg-gray-800 hover:bg-purple-700 p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    <h3 class="text-xl font-bold">The Critic's Corner</h3>
+                </button>
+            </div>
+
+            <div class="mt-8">
+                <button data-module="flashcard" class="module-btn bg-purple-800 hover:bg-purple-600 p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 w-full md:w-1/2 lg:w-1/3 mx-auto">
+                    <h3 class="text-xl font-bold">Flashcard Study</h3>
+                </button>
+            </div>
+
+            <button id="ai-settings-btn" class="absolute top-4 right-4 bg-gray-700 hover:bg-purple-700 p-3 rounded-full shadow-lg">
+                ⚙️ AI Settings
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                 <h2 id="quiz-title" class="title-font text-3xl font-bold text-purple-300"></h2>
+                 <button id="quiz-back-to-menu" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded text-sm">Main Menu</button>
+            </div>
+            <div id="progress-bar" class="w-full bg-gray-700 rounded-full h-2.5 mb-4">
+                <div id="progress-bar-inner" class="bg-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="question-container" class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <p id="question-text" class="text-xl mb-4"></p>
+                <div id="answer-options" class="grid grid-cols-1 gap-4"></div>
+            </div>
+            <div id="feedback-container" class="mt-4">
+                <div id="explanation-panel" class="hidden bg-gray-700 p-4 rounded-lg text-sm"></div>
+                <button id="ai-action-btn" class="hidden mt-2 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded"></button>
+            </div>
+            <button id="next-question-btn" class="hidden mt-6 w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded">Next Question</button>
+        </div>
+        
+        <!-- Historian Screen -->
+        <div id="historian-screen" class="hidden w-full max-w-4xl">
+             <div class="flex justify-between items-center mb-4">
+                <h2 class="title-font text-3xl font-bold text-purple-300">The Historian's Scroll</h2>
+                <button id="historian-back-to-menu" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded text-sm">Main Menu</button>
+            </div>
+             <div id="historian-progress-bar" class="w-full bg-gray-700 rounded-full h-2.5 mb-4">
+                <div id="historian-progress-bar-inner" class="bg-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div id="historian-question-container" class="bg-gray-800 p-6 rounded-lg shadow-lg mb-4">
+                 <p id="historian-question-text" class="text-xl mb-4 text-center"></p>
+            </div>
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="w-full md:w-1/2">
+                    <h3 class="font-bold text-lg mb-2 text-center">Available Events</h3>
+                    <div id="event-pool" class="bg-gray-800 p-4 rounded-lg min-h-[200px] space-y-2">
+                        <!-- Events will be populated here -->
+                    </div>
+                </div>
+                <div class="w-full md:w-1/2">
+                    <h3 class="font-bold text-lg mb-2 text-center">Your Timeline (Tap to order)</h3>
+                    <div id="player-timeline" class="bg-gray-800 p-4 rounded-lg min-h-[200px] space-y-2">
+                         <!-- Player's ordered events will appear here -->
+                    </div>
+                </div>
+            </div>
+            <button id="submit-timeline-btn" class="mt-6 w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded">Submit</button>
+            <div id="timeline-feedback" class="hidden mt-6"></div>
+            <button id="historian-continue-btn" class="hidden mt-6 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded">Next Timeline</button>
+        </div>
+
+
+        <!-- Flashcard Screen -->
+        <div id="flashcard-screen" class="hidden w-full max-w-xl text-center">
+            <h2 class="title-font text-3xl font-bold text-center mb-4 text-purple-300">Flashcard Study</h2>
+            <div id="flashcard-progress" class="mb-4">Card 1 of X</div>
+            <div id="flashcard-container" class="w-full h-80 mb-4">
+                <div id="flashcard" class="relative w-full h-full">
+                    <div id="flashcard-front" class="absolute w-full h-full bg-gray-800 rounded-lg shadow-lg flex items-center justify-center p-6"></div>
+                    <div id="flashcard-back" class="absolute w-full h-full bg-purple-800 rounded-lg shadow-lg flex items-center justify-center p-6"></div>
+                </div>
+            </div>
+            <div class="flex justify-between w-full">
+                <button id="prev-flashcard-btn" class="bg-gray-700 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded">Previous</button>
+                <button id="next-flashcard-btn" class="bg-gray-700 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded">Next</button>
+            </div>
+             <button id="flashcard-back-to-menu" class="mt-6 w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded">Back to Menu</button>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 opacity-0 invisible">
+        <div id="modal-content" class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-lg transform scale-95">
+            <h3 id="modal-title" class="title-font text-2xl font-bold mb-4 text-purple-300"></h3>
+            <div id="modal-body" class="text-gray-300"></div>
+            <button id="modal-close-btn" class="mt-6 w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Close</button>
+        </div>
+    </div>
+    
+    <!-- Flashcard Topic Selection Modal -->
+    <div id="flashcard-topic-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <h3 class="title-font text-2xl font-bold mb-6 text-purple-300 text-center">Select Study Topics</h3>
+            <div id="topic-checkboxes" class="space-y-3 mb-6">
+                <!-- Checkboxes will be populated here -->
+            </div>
+            <div class="flex flex-col space-y-3">
+                <button id="start-flashcard-session-btn" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Start Studying</button>
+                <button id="flashcard-modal-close-btn" class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- DATA STORE ---
+        // All questions and content are derived exclusively from the provided master document.
+        const gameData = {
+            regionName: "Romania",
+            historyFlashcards: [
+                { front: "What does 'Dacia Felix' mean?", back: "Happy Dacia - the name given to the region by the Romans due to its viticultural wealth." },
+                { front: "Who was King Burebista?", back: "A 1st-century BC Dacian King who reputedly ordered all vineyards destroyed to deter invaders." },
+                { front: "What event was commemorated on a Roman coin from 106 AD?", back: "The region's vinous abundance, depicting a woman being offered grapes by two children." },
+                { front: "What was the role of monasteries during the Middle Ages?", back: "They were crucial centers for preserving and advancing winemaking, leading to a golden age in the 1400s." },
+                { front: "When was phylloxera officially declared in Romania (Prahova)?", back: "1884. The blight wiped out vast swathes of indigenous grape varieties." },
+                { front: "What was the consequence of replanting after phylloxera?", back: "The industry was saved by grafting onto American rootstock, but the ampelographic landscape was permanently altered with French varieties." },
+                { front: "When was the Communist regime established in Romania?", back: "1947. This marked a radical shift in the wine industry from quality to quantity." },
+                { front: "What were IAS (*Întreprindere Agricolă de Stat*)?", back: "Enormous state-run agricultural enterprises created during the communist era through forced collectivization of vineyards." },
+                { front: "What was the primary goal of the communist-era wine industry?", back: "Mass production for barter with other communist bloc countries, particularly the Russian army." },
+                { front: "Who was Nicolae Ceaușescu?", back: "A notorious dictator who came to power in 1967, imposing a brutal and repressive regime until his death in 1989." },
+                { front: "What was a major challenge for the wine industry immediately after the fall of Communism in 1989?", back: "A highly fragmented landscape of small, under-capitalized plots resulted from the slow de-collectivization process." },
+                { front: "Who is Count Guy de Poix?", back: "A pioneering French nobleman who founded the SERVE winery in Dealu Mare in 1994, helping to lay the groundwork for the quality revolution." },
+                { front: "Who is Philip Cox?", back: "A British pioneer investor who, with partners, acquired the former state winery in Recaș, transforming it into a major modern producer." },
+                { front: "What was the true catalyst for Romania's nationwide quality revolution?", back: "Accession to the European Union in 2007, which brought a massive influx of EU funds for modernization and replanting." },
+                { front: "How many hectares of vineyards were estimated to be replanted with superior stock after 2007?", back: "An estimated 30,000 hectares." },
+                { front: "How did the communist era inadvertently lay the groundwork for rapid modernization post-2007?", back: "The creation of massive, consolidated state wineries allowed new private owners to absorb and leverage large-scale EU funding efficiently." },
+                { front: "In what century did Greek colonists first establish a wine culture in Dobrogea?", back: "The 6th Century BC." },
+                { front: "Which Romanian wine region was historically compared to Hungary's Tokaji for its sweet wines?", back: "Cotnari, in the Hills of Moldova." },
+                { front: "What was the peak vineyard area in Romania before the 20th century?", back: "By 1893, the country's area under vine had swelled to exceed 300,000 hectares." },
+                { front: "Who was Sergio Faleschini?", back: "An Italian entrepreneur who founded Vinarte, another of the key early post-communist ventures focused on quality." }
+            ],
+            modules: {
+                historian: {
+                    title: "The Historian's Scroll",
+                    instructions: "Read the historical period description. Then, tap the events from the 'Available Events' pool to place them into 'Your Timeline' in the correct chronological order. Click 'Submit' to see your score.",
+                    questions: [
+                        {
+                            prompt: "Arrange the key events of Romania's ancient and medieval viticultural history in chronological order.",
+                            events: [
+                                { year: "600-500 BC", text: "Greek colonists establish a wine culture in the coastal region of Dobrogea." },
+                                { year: "5th Century BC", text: "Organized viticulture suggested by archaeological evidence on Cătălina Hill in Cotnari." },
+                                { year: "1st Century BC", text: "Dacian King Burebista reputedly orders vineyards destroyed to deter invaders." },
+                                { year: "106 AD", text: "Romans issue a coin depicting a woman offered grapes, celebrating Dacia's vinous wealth." },
+                                { year: "1400s", text: "Monastic stewardship leads to a significant expansion of vineyards, ushering in a golden age." }
+                            ]
+                        },
+                        {
+                            prompt: "Place the events of the 19th and early 20th-century, a period of boom and bust, in the correct order.",
+                             events: [
+                                { year: "19th Century", text: "Sweet wines from Cotnari become fashionable across Europe, rivaling Tokaji." },
+                                { year: "1884", text: "Phylloxera is officially declared in Prahova, devastating native grape varieties." },
+                                { year: "Late 1800s", text: "Replanting begins using French varieties grafted on American rootstock." },
+                                { year: "1893", text: "Romanian vineyard area swells to over 300,000 hectares." },
+                                { year: "1918", text: "Transylvania and Banat join Romania, unifying major wine regions." }
+                            ]
+                        },
+                        {
+                            prompt: "Order the key events of the Communist era, which radically transformed the wine industry.",
+                            events: [
+                                { year: "1947", text: "A Communist regime is established, shifting focus from quality to quantity." },
+                                { year: "1949", text: "Full-scale collectivization begins, stripping families of ancestral vineyards." },
+                                { year: "Post-1949", text: "State-run enterprises (IAS) are created, consolidating land into enormous holdings." },
+                                { year: "1967", text: "Nicolae Ceaușescu comes to power, imposing a brutal and repressive regime." },
+                                { year: "Communist Era", text: "Massive state wineries like Murfatlar and Jidvei are built for volume, not quality." }
+                            ]
+                        },
+                        {
+                            prompt: "Arrange the events of the post-Communist revolution and the slow path to recovery.",
+                            events: [
+                                { year: "1989", text: "The fall of Communism occurs, but the wine industry enters a period of decline." },
+                                { year: "1990s", text: "Visionary foreign investors like Philip Cox (Recaș) and Count Guy de Poix (SERVE) arrive." },
+                                { year: "Post-1989", text: "The state begins the slow process of returning 180,000 hectares of land to original owners." },
+                                { year: "2007", text: "Romania's accession to the European Union provides a major catalyst for modernization." },
+                                { year: "Post-2007", text: "An estimated 30,000 hectares of vineyards are replanted with superior vine stock using EU funds." }
+                            ]
+                        }
+                    ]
+                },
+                terroir: {
+                    title: "The Terroir Architect",
+                    instructions: "Answer 10 multiple-choice questions about Romania's geography, climate, and soils. Choose the best answer for each question.",
+                    questions: [
+                        { q: "Which mountain range acts as a natural barrier, shielding Romanian vineyards from harsh northern air masses?", a: ["The Carpathian Mountains", "The Alps", "The Ural Mountains", "The Balkan Mountains"], explanation: "The Carpathian Mountains form a great arc through the center of the country, protecting vineyards from harsh polar and Siberian air masses." },
+                        { q: "What body of water provides a crucial moderating influence on the climate of the Dobrogea region?", a: ["The Black Sea", "The Mediterranean Sea", "The Danube River", "The Aegean Sea"], explanation: "The Black Sea, to the southeast, exerts a crucial moderating influence, tempering summer heat and softening winter cold in coastal regions like Dobrogea." },
+                        { q: "Romania shares its latitude (44th-48th parallels) with which other famous wine regions?", a: ["Bordeaux and Tuscany", "Rioja and Douro", "Napa and Sonoma", "Barossa and Marlborough"], explanation: "Situated between the 44th and 48th northern parallels, Romania shares its latitude with prestigious regions like Bordeaux and Tuscany." },
+                        { q: "Which Romanian region is classified as the cooler EU Zone B, ideal for aromatic white wines?", a: ["The Transylvanian Plateau", "Dealu Mare", "Dobrogea", "Banat"], explanation: "The high-altitude plateau of Transylvania is the only major Romanian wine region classified entirely within the cool EU Zone B, making it ideal for aromatic white wines." },
+                        { q: "The Dealu Mare DOC is known for soils rich in what element, contributing to the structure of its red wines?", a: ["Iron Oxides", "Calcium Carbonate", "Volcanic Ash", "Slate"], explanation: "The soils of Dealu Mare have a prevalence of red-brown forest soils rich in iron oxides, which contribute to the structure and color of the red wines." },
+                        { q: "What is the dominant soil type in the Danube Terraces (Teraselor Dunării) region, known for being rich and fertile?", a: ["Cernoziom (Molisols)", "Limestone", "Gravel", "Clay"], explanation: "The soils of the Danube Terraces are predominantly fertile molisols, including the rich, dark soil known as cernoziom." },
+                        { q: "The climate of Muntenia and Oltenia is best described as:", a: ["Temperate-continental", "Maritime", "Mediterranean", "Alpine"], explanation: "The region of Muntenia and Oltenia benefits from a temperate-continental climate, defined by hot summers and long, mild, dry autumns." },
+                        { q: "What is the primary viticultural advantage of the long, dry autumns in the Moldova region?", a: ["They allow for the development of noble rot (Botrytis cinerea).", "They prevent frost damage.", "They increase rainfall.", "They shorten the growing season."], explanation: "The long, dry autumns in Moldova are crucial as they allow for the development of Botrytis cinerea (noble rot), essential for the region's classic sweet wines." },
+                        { q: "The Miniș DOC in Crișana is noted for soils with a high content of what?", a: ["Iron Oxides", "Sand", "Loam", "Peat"], explanation: "In the Miniș area, soils with a high content of iron oxides are particularly suited for red wines like Cadarcă." },
+                        { q: "What is the primary climatic influence in the Banat region?", a: ["Mediterranean", "Atlantic", "Siberian", "Arctic"], explanation: "The climate of Banat is cool to moderate temperate-continental, with a strong Mediterranean influence that brings long hours of sunshine." },
+                        { q: "Which region boasts over 300 days of sunshine annually?", a: ["Dobrogea", "Transylvania", "Moldova", "Maramureș"], explanation: "Dobrogea boasts one of the sunniest climates in Romania, with over 300 days of sunshine annually." },
+                        { q: "The Olt River moderates the climate and provides humidity in which important DOC?", a: ["Drăgășani", "Cotnari", "Recaș", "Murfatlar"], explanation: "In DOC Drăgășani, the climate is moderated by the Olt River valley, which ensures good humidity even in hot summers." },
+                        { q: "What is the meaning of 'Dealu Mare'?", a: ["Big Hill", "Red Valley", "Sun Coast", "Black River"], explanation: "Dealu Mare translates to 'Big Hill', a fitting name for this celebrated vineyard area on the Carpathian foothills." },
+                        { q: "The soils in Dobrogea are noted for being well-drained and often dry, which has what effect on the vines?", a: ["It forces them to root deeply, concentrating flavors.", "It stunts their growth.", "It increases their leaf production.", "It makes them produce more acidic grapes."], explanation: "The well-drained, often dry soils in Dobrogea force the vines to root deeply, which contributes to the concentration and complexity of the resulting wines." },
+                        { q: "What is the general topographical zone of the Transylvanian Plateau?", a: ["Intra-Carpathian Plateau", "Carpathian Foothills", "Pontic-Danubian Area", "Pannonian Plain"], explanation: "The Transylvanian Plateau is an Intra-Carpathian Plateau, a high-altitude area encircled by the mountains." },
+                        { q: "What is the average annual rainfall in the Dealu Mare region?", a: ["500-600 mm", "200-300 mm", "800-900 mm", "Over 1000 mm"], explanation: "Rainfall in Dealu Mare is moderate, averaging between 500 and 600 mm annually, with drier conditions during ripening." },
+                        { q: "The Sarica-Niculițel DOC is located at the foothills of which mountains?", a: ["Măcin Mountains", "Carpathian Mountains", "Făgăraș Mountains", "Retezat Mountains"], explanation: "The Sarica-Niculițel DOC is located in northern Dobrogea, at the foothills of the Măcin Mountains." },
+                        { q: "In which region are you most likely to find volcanic soil deposits?", a: ["Transylvania", "Banat", "Danube Terraces", "Muntenia"], explanation: "The soils of the Transylvanian Plateau are diverse, with a mix of volcanic, limestone, and gravelly deposits." },
+                        { q: "What geographical feature forms the southern border of the Danube Terraces region?", a: ["The Danube River", "The Black Sea", "The Carpathian Mountains", "The Prut River"], explanation: "The Teraselor Dunării (Danube Terraces) is a region whose identity is inextricably linked to the great river that forms its southern border." },
+                        { q: "The climate of Crișana and Maramureș is influenced by its proximity to what major geographical feature?", a: ["The Pannonian Basin", "The Black Sea", "The Dnieper River", "The Balkan Mountains"], explanation: "The terroir of Crișana and Maramureș reflects its position as a transition zone between the Pannonian Basin and the Carpathian Mountains." },
+                        { q: "Which region has a natural north-south, white-red grape divide as a fundamental characteristic?", a: ["The entire country of Romania", "Dealu Mare only", "Transylvania only", "Dobrogea only"], explanation: "Romania's geography dictates a natural regional specialization. The cooler interior of Transylvania is a bastion for white wines, while the sun-drenched southern foothills serve as the engine room for red wines. This clear north-south, white-red divide is a fundamental characteristic of the country's viticultural identity." },
+                        { q: "What is a primary viticultural hazard in many Romanian regions, especially in fragmented vineyards?", a: ["Powdery and Downy Mildew", "Excessive sunshine", "Lack of iron in soil", "Volcanic eruptions"], explanation: "Viticultural hazards include both powdery mildew and downy mildew, as well as grey rot, particularly in fragmented vineyards where vines may be left untreated due to the cost of spraying." },
+                        { q: "The climate in the Moldova region is distinctly influenced by cold air currents from where?", a: ["The vast plains to the east", "The Black Sea", "The Mediterranean Sea", "The Alps"], explanation: "The climate in Moldova is temperate-continental, but it is distinctly influenced by cold air currents from the vast plains to the east, resulting in colder winters." },
+                        { q: "What is a major viticultural challenge related to water access in Romania?", a: ["Access to irrigation water is restricted by the state", "There is too much rainfall", "The rivers are all saline", "The soil cannot retain water"], explanation: "Most vineyards are not irrigated, and access to irrigation water or boreholes is restricted by the state, so even vine-growers who want to irrigate often cannot do so in practice." },
+                        { q: "The hills of Muntenia and Oltenia are also known as what?", a: ["The Subcarpathian hills", "The Transylvanian Alps", "The Dobrogean Plateau", "The Moldovan Steppe"], explanation: "The region's vineyards are planted on the rolling Subcarpathian hills, which provide ideal sun exposure and shelter from harsh northern winds." },
+                        { q: "What type of soil is NOT commonly found in Dealu Mare?", a: ["Volcanic Tuff", "Clays and Marls", "Sandstones", "Red-brown forest soils"], explanation: "The geology of Dealu Mare is dominated by sedimentary deposits, including clays, marls, sandstones, and limestone, with a prevalence of red-brown forest soils. Volcanic soils are more characteristic of Transylvania." },
+                        { q: "What is the average July temperature in Dealu Mare?", a: ["24.4°C (76°F)", "18°C (64°F)", "30°C (86°F)", "15°C (59°F)"], explanation: "The Dealu Mare area experiences a hot-season average high of 76°F (24.4°C) in July." },
+                        { q: "The terroir of Crișana is notably dominated by which three components?", a: ["Limestone, clay, and loess", "Granite, sand, and shale", "Volcanic rock, slate, and gravel", "Marl, peat, and silt"], explanation: "The terroir of Crișana is notably dominated by limestone, clay, and loess." },
+                        { q: "The Banat region's soils are predominantly what type?", a: ["Brown podzolic, eroded by gravel", "Rich chernozem", "Pure limestone", "Sandy loam"], explanation: "The soils of Banat are predominantly brown podzolic, eroded by gravel, with a high content of iron and micro-elements." },
+                        { q: "Which region is described as a 'viticultural island' within Romania?", a: ["The Transylvanian Plateau", "The Danube Terraces", "The Banat", "The Hills of Moldova"], explanation: "Encircled by the protective arc of the Carpathian Mountains, the Transylvanian Plateau is a distinct viticultural island within Romania, defined by its cool climate." },
+                        { q: "What is a key feature of the high diurnal temperature variation in Transylvania?", a: ["Warm days develop flavor, cool nights preserve acidity", "It causes the grapes to ripen too quickly", "It leads to high sugar and low acidity", "It only affects red grapes"], explanation: "The high altitude and surrounding mountains result in a significant diurnal temperature variation—warm days allow for flavor development, while cool nights are essential for preserving the grapes' natural acidity." },
+                        { q: "What is the primary geological feature of the Moldova region vineyards?", a: ["They are planted on south-facing slopes on plateaus and hillsides", "They are in a flat river valley", "They are on a coastal plain", "They are in a volcanic crater"], explanation: "In Moldova, vineyards are often planted on south-facing slopes on plateaus, hillsides, and terraces, which maximizes sun exposure and protects the vines from harsh winds." },
+                        { q: "The soils of Drăgășani are predominantly what?", a: ["Clay with deposits of limestone, sand, and gravel", "Pure sand", "Volcanic rock", "Heavy peat"], explanation: "The soils in DOC Drăgășani are predominantly clay with deposits of limestone, sand, and gravel." },
+                        { q: "What is the approximate length of the Dealu Mare vineyard area?", a: ["65 kilometers", "10 kilometers", "200 kilometers", "500 kilometers"], explanation: "Dealu Mare is a compact vineyard area that stretches for 65 kilometers across the counties of Prahova and Buzău." },
+                        { q: "The climate in Mehedinți DOC is temperate continental with what other influence?", a: ["Mediterranean", "Alpine", "Oceanic", "Desert"], explanation: "The climate in Mehedinți DOC is temperate continental with a Mediterranean influence, and it is the sunniest and warmest of the southern Carpathian wine regions." },
+                        { q: "What is a key benefit of the Black Sea's cool coastal breezes in Dobrogea?", a: ["They temper summer heat and extend the growing season", "They bring salty rain", "They prevent grapes from ripening", "They cause frost"], explanation: "The nearby Black Sea provides a crucial moderating influence in Dobrogea, with cool coastal breezes that temper the summer heat and extend the growing season." },
+                        { q: "Which region has the highest duration of sunlight in Romania?", a: ["The Danube Terraces", "Transylvania", "Maramureș", "Moldova"], explanation: "The Danube Terraces (Teraselor Dunării) region experiences one of the warmest and sunniest climates in Romania, with the highest duration of sunlight." },
+                        { q: "What is the typical elevation range for vineyards in the Moldova region?", a: ["230 to 400 meters", "Below 100 meters", "500 to 800 meters", "Above 1000 meters"], explanation: "The altitude of the vineyards in the Moldova region ranges significantly, from around 230 to nearly 400 meters." },
+                        { q: "What is a common viticultural practice in modern Romanian vineyards, subsidized by EU funds?", a: ["VSP training and closer spacing", "Traditional gobelet training", "Leaving vines unpruned", "Wide spacing for tractors"], explanation: "EU funds have subsidized substantial replanting with higher-quality clones, with VSP training and much closer spacing (4,000–5,000 vines/ha)." },
+                        { q: "Which region is NOT one of the three main topographical zones of Romania?", a: ["The Pannonian Plain", "The Intra-Carpathian Plateau", "The Carpathian Foothills", "The Pontic-Danubian Area"], explanation: "The three distinct topographical zones are The Intra-Carpathian Plateau, The Carpathian Foothills, and The Pontic-Danubian Area. The Pannonian Plain lies to the west, bordering Hungary." },
+                        { q: "What is the primary soil type in the Cotnari area that is favorable for vine cultivation?", a: ["Leached chernozem", "Sand", "Slate", "Granite"], explanation: "In the renowned Cotnari area, the presence of leached chernozem on high plateaus is particularly favorable for vine cultivation." },
+                        { q: "Which DOC is located in a 'natural amphitheater' with a unique microclimate?", a: ["Carastelec (in Crișana)", "Dealu Mare", "Cotnari", "Recaș"], explanation: "The winery Carastelec, a sparkling wine pioneer, is located in a 'natural amphitheater' in Crișana with a unique microclimate." },
+                        { q: "What is a key topographical feature of the Danube Terraces region?", a: ["Fertile terraces and plains", "Steep mountain slopes", "A high-altitude plateau", "Coastal cliffs"], explanation: "Unlike other regions defined by hills or plateaus, the Danube Terraces area is characterized by the fertile terraces and plains carved out by the Danube." },
+                        { q: "Which region's climate is characterized by mild winters, early springs, and long autumns?", a: ["Crișana and Maramureș", "Dobrogea", "Transylvania", "The Southern Sands"], explanation: "The climate of Crișana and Maramureș is characterized by mild winters, early springs, warm summers, and long autumns, conducive to full ripening." },
+                        { q: "What is the main geological composition of the hills in Muntenia and Oltenia?", a: ["Sedimentary deposits (clays, marls, sandstones)", "Igneous rock", "Metamorphic rock", "Coral reefs"], explanation: "The geology of Muntenia and Oltenia is dominated by sedimentary deposits, including clays, marls, sandstones, and limestone." },
+                        { q: "What is a primary viticultural risk in Drăgășani?", a: ["Hail", "Drought", "Excessive heat", "Poor soil drainage"], explanation: "In Drăgășani, hail is a frequent hazard for vineyards." },
+                        { q: "What is the primary role of the Danube River in the Teraselor Dunării terroir?", a: ["Climate moderation and irrigation", "Transporting grapes", "Providing a defensive barrier", "Creating sandy soils"], explanation: "The Danube River is a critical element of the terroir, serving as a vital source for irrigation and playing a crucial role in moderating the climate." },
+                        { q: "Which region is described as having a temperate-continental climate with distinct Mediterranean influences?", a: ["Drăgășani", "Cotnari", "Târnave", "Recaș"], explanation: "DOC Drăgășani's climate is temperate-continental with distinct Mediterranean influences, moderated by the Olt River valley." },
+                        { q: "The soils of the Banat region are noted for their high content of what?", a: ["Iron and micro-elements", "Salt", "Peat", "Chalk"], explanation: "The soils in Banat are predominantly brown podzolic, with a high content of iron and micro-elements, which is particularly favorable for viticulture." },
+                        { q: "In which region would you find the sub-region of Valea Călugărească, famous for red wines?", a: ["Dealu Mare", "Târnave", "Murfatlar", "Miniș"], explanation: "Valea Călugărească is one of the most famous viticultural centers within the Dealu Mare DOC, particularly known for its red wines." }
+                    ]
+                },
+                ampelographer: {
+                    title: "The Ampelographer's Challenge",
+                    instructions: "Answer 10 multiple-choice questions about Romania's key indigenous and international grape varieties. After a correct answer, you may have the option to generate a detailed AI profile.",
+                    questions: [
+                        { q: "What is Romania's most planted grape variety?", a: ["Fetească Regală", "Merlot", "Fetească Neagră", "Fetească Albă"], subjectType: 'grape', subjectName: 'Fetească Regală', explanation: "Fetească Regală (Royal Maiden) is Romania's most planted grape. It is a natural crossing of Fetească Albă and Grasă de Cotnari." },
+                        { q: "Which red grape is considered Romania's flagship variety, gaining significant international attention?", a: ["Fetească Neagră", "Cabernet Sauvignon", "Băbească Neagră", "Merlot"], subjectType: 'grape', subjectName: 'Fetească Neagră', explanation: "Fetească Neagră (Black Maiden) is Romania's flagship red grape, known for producing robust, deeply colored wines with complex aromas." },
+                        { q: "Which historic grape from Cotnari is capable of producing legendary sweet, botrytized wines?", a: ["Grasă de Cotnari", "Frâncușă", "Fetească Albă", "Tămâioasă Românească"], subjectType: 'grape', subjectName: 'Grasă de Cotnari', explanation: "Grasă de Cotnari (Fat of Cotnari) is a historic variety capable of producing legendary sweet, botrytized wines with immense aging potential." },
+                        { q: "Tămâioasă Românească is a highly aromatic member of which grape family?", a: ["Muscat", "Pinot", "Riesling", "Sauvignon"], subjectType: 'grape', subjectName: 'Tămâioasă Românească', explanation: "Tămâioasă Românească (Romanian Incense) is a member of the Muscat family, producing intensely perfumed wines with notes of honeycomb and elderflower." },
+                        { q: "Which grape, native to the Drăgășani region, is an improved clone of an ancient Dacian variety?", a: ["Crâmpoșie Selecționată", "Negru de Drăgășani", "Novac", "Băbească Neagră"], subjectType: 'grape', subjectName: 'Crâmpoșie Selecționată', explanation: "Crâmpoșie Selecționată is an improved clone of an ancient Dacian variety, native to the Drăgășani region, yielding crisp white wines with high acidity." },
+                        { q: "Which grape is Romania's most planted red variety overall?", a: ["Merlot", "Fetească Neagră", "Cabernet Sauvignon", "Pinot Noir"], subjectType: 'grape', subjectName: 'Merlot', explanation: "Despite the rise of Fetească Neagră, Merlot is the most planted red grape variety in Romania as of 2017." },
+                        { q: "Zghihară de Huși, from the Huși region, is known for producing what style of wine?", a: ["Light, zesty white wines with high acidity", "Full-bodied, oaked red wines", "Sweet, botrytized dessert wines", "Aromatic rosé wines"], subjectType: 'grape', subjectName: 'Zghihară de Huși', explanation: "Zghihară de Huși is a high-acid variety from the Huși region, producing light, zesty white wines with flavors of green apple and gooseberry." },
+                        { q: "Negru de Drăgășani and Novac are modern crossings created at which research station?", a: ["Drăgășani", "Murfatlar", "Cotnari", "Blaj"], subjectType: 'grape', subjectName: 'Negru de Drăgășani', explanation: "Negru de Drăgășani and Novac are two modern red grape crossings created at the Drăgășani research station." },
+                        { q: "Which light-bodied red grape is often compared to Gamay or Pinot Noir?", a: ["Băbească Neagră", "Fetească Neagră", "Cadarcă", "Burgund Mare"], subjectType: 'grape', subjectName: 'Băbească Neagră', explanation: "Băbească Neagră (Grandmother's Black) is an old variety that produces light-bodied, high-acid red wines with juicy red fruit flavors, often compared to Gamay." },
+                        { q: "Which international white grape is NOT among the most key/significant plantings in Romania?", a: ["Viognier", "Sauvignon Blanc", "Chardonnay", "Pinot Gris"], subjectType: 'grape', subjectName: 'Viognier', explanation: "While plantings exist, Viognier is not considered as key or significant as the widespread plantings of Sauvignon Blanc, Chardonnay, and Pinot Gris." },
+                        { q: "What is the parentage of Fetească Regală?", a: ["Fetească Albă x Grasă de Cotnari", "Fetească Albă x Frâncușă", "Fetească Neagră x Coarnă Neagră", "Unknown"], subjectType: 'grape', subjectName: 'Fetească Regală', explanation: "Fetească Regală is a natural crossing of Fetească Albă and Grasă de Cotnari, making it a truly indigenous Romanian variety." },
+                        { q: "Which grape is known in English as 'Romanian Incense'?", a: ["Tămâioasă Românească", "Busuioacă de Bohotin", "Grasă de Cotnari", "Fetească Neagră"], subjectType: 'grape', subjectName: 'Tămâioasă Românească', explanation: "Tămâioasă Românească translates to 'Romanian Incense', a reference to its intensely perfumed, aromatic profile." },
+                        { q: "Which grape is a specialty of the Miniș DOC and known as Kadarka in Hungary?", a: ["Cadarcă", "Burgund Mare", "Băbească Neagră", "Novac"], subjectType: 'grape', subjectName: 'Cadarcă', explanation: "Cadarcă is a red grape historically renowned in the Miniș DOC. It is the same variety as Hungary's Kadarka." },
+                        { q: "Mustoasă de Măderat is a local variety from which region, used for crisp still and sparkling wines?", a: ["Crișana", "Dobrogea", "Oltenia", "Moldova"], subjectType: 'grape', subjectName: 'Mustoasă de Măderat', explanation: "Mustoasă de Măderat is a local variety from the Crișana region, known for producing high-acidity white wines suitable for both still and sparkling styles." },
+                        { q: "What is the grape variety 'Burgund Mare' also known as?", a: ["Blaufränkisch / Kékfrankos", "Pinot Noir", "Gamay", "Zweigelt"], subjectType: 'grape', subjectName: 'Burgund Mare', explanation: "The variety long known as Burgund Mare ('big Burgundian') is actually Kékfrankos, also known as Blaufränkisch." },
+                        { q: "Which pink-skinned aromatic grape is a rare specialty of Domeniul Coroanei Segarcea?", a: ["Tămâioasă Roză", "Pinot Gris", "Gewürztraminer", "Busuioacă de Bohotin"], subjectType: 'grape', subjectName: 'Tămâioasă Roză', explanation: "Domeniul Coroanei Segarcea cultivates the rare and unique pink-skinned aromatic grape, Tămâioasă Roză." },
+                        { q: "Which white grape is a key component of the traditional dry wines of Cotnari, offering a crisp alternative to Pinot Grigio?", a: ["Frâncușă", "Fetească Albă", "Grasă de Cotnari", "Aligoté"], subjectType: 'grape', subjectName: 'Frâncușă', explanation: "The Frâncușă grape from Cotnari yields a crisp, fresh dry white wine with floral and green apple notes, making for a pleasant alternative to wines like Italian Pinot Grigio or Soave." },
+                        { q: "Which international variety is particularly well-regarded for producing full-bodied, ripe, oaked styles in Murfatlar?", a: ["Chardonnay", "Sauvignon Blanc", "Riesling", "Chenin Blanc"], subjectType: 'grape', subjectName: 'Chardonnay', explanation: "Chardonnay from the sunny Murfatlar DOC is particularly well-regarded, often producing full-bodied, ripe, and oaked styles." },
+                        { q: "Which white grape is a specialty of the Sarica-Niculițel DOC in Dobrogea?", a: ["Aligoté", "Fetească Regală", "Pinot Gris", "Chardonnay"], subjectType: 'grape', subjectName: 'Aligoté', explanation: "The Sarica-Niculițel DOC is known for producing excellent white wines, particularly from Aligoté." },
+                        { q: "What is the English translation for Fetească Albă?", a: ["White Maiden", "Royal Maiden", "Fat Maiden", "Old Maiden"], subjectType: 'grape', subjectName: 'Fetească Albă', explanation: "Fetească Albă translates to 'White Maiden'. It is an ancient variety prized for its delicate and elegant white wines." },
+                        { q: "Busuioacă de Bohotin is a pink-skinned grape named after the Romanian word for what herb?", a: ["Basil (busuioc)", "Thyme", "Rosemary", "Mint"], subjectType: 'grape', subjectName: 'Busuioacă de Bohotin', explanation: "Busuioacă de Bohotin is named after the Romanian word for basil, 'busuioc', for its grapey, floral, and red-fruit aromas." },
+                        { q: "Which grape is a cross between Welschriesling and Muscat of Hamburg, developed at the Odobești research station?", a: ["Șarba", "Columna", "Codană", "Novac"], subjectType: 'grape', subjectName: 'Șarba', explanation: "Șarba is a cross between Welschriesling and Muscat of Hamburg developed at the Odobești research station in 1972. It has a grapey aroma and good acidity." },
+                        { q: "What is the synonym for the grape Galbenă de Odobești?", a: ["Zghihară de Huși", "Fetească Regală", "Crâmpoșie", "Plavaie"], subjectType: 'grape', subjectName: 'Galbenă de Odobești', explanation: "The local grape Galbenă de Odobești has a synonym: Zghihară de Huși. Both make pleasant if not complex young-drinking whites." },
+                        { q: "Which grape is NOT one of the four traditional varieties for the classic Cotnari blend?", a: ["Chardonnay", "Grasă de Cotnari", "Fetească Albă", "Frâncușă"], subjectType: 'grape', subjectName: 'Chardonnay', explanation: "The traditional 'recipe' for Cotnari wine consists of Grasă de Cotnari, Fetească Albă, Frâncușă, and Tămâioasă Românească. Chardonnay is a permitted international variety but not part of the historic blend." },
+                        { q: "Which grape is a high-acid, low-alcohol variety from Apold in Transylvania, mainly used for sparkling wines?", a: ["Iordană", "Neuburger", "Furmint", "Plavaie"], subjectType: 'grape', subjectName: 'Iordană', explanation: "Apold’s Iordană vine makes high-acid, low-alcohol wine used mainly for sparkling wines." },
+                        { q: "Which red grape, a Saperavi cross, is a local specialty of Drăgășani showing great promise?", a: ["Negru de Drăgășani", "Băbească Neagră", "Fetească Neagră", "Cadarcă"], subjectType: 'grape', subjectName: 'Negru de Drăgășani', explanation: "Local red specialities from Drăgășani such as Negru de Drăgășani and Novac, both Saperavi crosses, show promise." },
+                        { q: "Which grape is also known as Welschriesling in other parts of Europe?", a: ["Riesling Italico", "Riesling de Rhin", "Fetească Albă", "Furmint"], subjectType: 'grape', subjectName: 'Riesling Italico', explanation: "Riesling Italico is the Romanian name for the grape known elsewhere as Welschriesling. It is distinct from true Riesling (Riesling de Rhin)." },
+                        { q: "Which grape is a key variety for elegant, cool-climate red wines in Transylvania?", a: ["Pinot Noir", "Cabernet Sauvignon", "Merlot", "Syrah"], subjectType: 'grape', subjectName: 'Pinot Noir', explanation: "Pinot Noir thrives in the cool climate of Transylvania, yielding elegant, perfumed wines with bright red fruit character." },
+                        { q: "What is the English translation for Fetească Neagră?", a: ["Black Maiden", "Royal Black", "Fat Black", "Grandmother's Black"], subjectType: 'grape', subjectName: 'Fetească Neagră', explanation: "Fetească Neagră translates to 'Black Maiden'. It is Romania's flagship red grape." },
+                        { q: "Which grape is NOT a key international red variety in Romania?", a: ["Sangiovese", "Merlot", "Cabernet Sauvignon", "Pinot Noir"], subjectType: 'grape', subjectName: 'Sangiovese', explanation: "While some plantings exist (e.g., in the Danube Terraces), Sangiovese is not considered a key or widespread international red variety compared to Merlot, Cabernet Sauvignon, and Pinot Noir." },
+                        { q: "The grape 'Columna' is a cross of Pinot Gris and what other variety?", a: ["Grasă de Cotnari", "Fetească Albă", "Chardonnay", "Sauvignon Blanc"], subjectType: 'grape', subjectName: 'Columna', explanation: "Columna is a grape cross enthusiastically developed by Romanian viticultural stations; it is a cross of Pinot Gris and Grasă de Cotnari." },
+                        { q: "What is the typical aroma profile of Fetească Albă?", a: ["Acacia flowers and orchard fruit", "Black pepper and plum", "Gooseberry and passionfruit", "Honey and walnuts"], subjectType: 'grape', subjectName: 'Fetească Albă', explanation: "Fetească Albă produces delicate, fine white wines with subtle aromas of acacia flowers and orchard fruit." },
+                        { q: "Which red grape is a local specialty of Nicorești in the Moldova region?", a: ["Băbească Neagră", "Fetească Neagră", "Cadarcă", "Merlot"], subjectType: 'grape', subjectName: 'Băbească Neagră', explanation: "The Nicorești DOC, east of Panciu, is another red-wine region, particularly well known for its Băbească Neagră." },
+                        { q: "Which grape is used to make light, high-acid, everyday wines in Odobești?", a: ["Plavaie", "Grasă de Cotnari", "Tămâioasă Românească", "Chardonnay"], subjectType: 'grape', subjectName: 'Plavaie', explanation: "The local grape Plavaie is grown in Odobești for light, high-acid, low-alcohol, everyday wines." },
+                        { q: "Which grape variety is NOT typically used for sparkling wine production in Romania?", a: ["Grasă de Cotnari", "Fetească Regală", "Chardonnay", "Pinot Noir"], subjectType: 'grape', subjectName: 'Grasă de Cotnari', explanation: "Grasă de Cotnari is famed for sweet, botrytized wines. Fetească Regală, Chardonnay, and Pinot Noir are all commonly used for sparkling wine production." },
+                        { q: "What is a characteristic flavor of Crâmpoșie Selecționată?", a: ["Green apple and citrus", "Tropical fruit and vanilla", "Black cherry and spice", "Dried apricot and honey"], subjectType: 'grape', subjectName: 'Crâmpoșie Selecționată', explanation: "Crâmpoșie Selecționată yields crisp, fresh white wines with high acidity and notes of green apple and citrus." },
+                        { q: "Which grape has seen its plantings increase rapidly due to its potential as Romania's flagship red?", a: ["Fetească Neagră", "Băbească Neagră", "Cadarcă", "Merlot"], subjectType: 'grape', subjectName: 'Fetească Neagră', explanation: "The area of Fetească Neagră is increasing rapidly because of its potential as Romania’s flagship red grape, with plantings now over 3,187 ha." },
+                        { q: "Which grape is a local clone of Muscat Blanc à Petits Grains?", a: ["Tămâioasă Românească", "Muscat Ottonel", "Busuioacă de Bohotin", "Șarba"], subjectType: 'grape', subjectName: 'Tămâioasă Românească', explanation: "Tămâioasă Românească, the 'frankincense grape', is a local clone of Muscat Blanc à Petits Grains." },
+                        { q: "The grape Roșioara is the same as which Bulgarian variety?", a: ["Pamid", "Mavrud", "Gamza", "Rubin"], subjectType: 'grape', subjectName: 'Roșioara', explanation: "The local grape Roșioară is the same as Bulgaria’s Pamid and is typically used for light, ordinary table wines." },
+                        { q: "Which grape is a key variety in the cool-climate Târnave DOC, alongside the Fetească grapes?", a: ["Traminer Roz (Gewürztraminer)", "Viognier", "Chenin Blanc", "Marsanne"], subjectType: 'grape', subjectName: 'Traminer Roz', explanation: "In Transylvania, the Jidvei DOC nested in Târnave DOC produces high-acidity white wines from several varieties, including the Fetească grapes and Traminer Roz (Gewürztraminer)." },
+                        { q: "What is the typical texture of a wine made from Fetească Neagră?", a: ["Velvety", "Astringent", "Watery", "Gritty"], subjectType: 'grape', subjectName: 'Fetească Neagră', explanation: "Fetească Neagră produces robust wines with a characteristic velvety texture." },
+                        { q: "Which grape is NOT a Saperavi cross developed in Romania?", a: ["Băbească Neagră", "Negru de Drăgășani", "Novac", "None of the above"], subjectType: 'grape', subjectName: 'Băbească Neagră', explanation: "Negru de Drăgășani and Novac are both modern Saperavi crosses. Băbească Neagră is an old, distinct indigenous variety." },
+                        { q: "Which grape is known for its perceptible phenolics in its pulp and can be successfully barrel fermented?", a: ["Fetească Regală", "Fetească Albă", "Zghihară de Huși", "Plavaie"], subjectType: 'grape', subjectName: 'Fetească Regală', explanation: "Fetească Regală has more body than Fetească Albă, with perceptible phenolics in its pulp, and can be successfully barrel fermented." },
+                        { q: "Which grape is a specialty of the Biharia subregion of Crișana?", a: ["Mustoasă de Măderat", "Cadarcă", "Fetească Neagră", "Grasă de Cotnari"], subjectType: 'grape', subjectName: 'Mustoasă de Măderat', explanation: "Mustoasă de Măderat is a traditional local white variety from the Crișana region, which includes the Biharia subdenomination, that makes light, crisp wine." },
+                        { q: "Which grape variety is NOT permitted in the Miniș DOC?", a: ["Zghihară de Huși", "Furmint", "Cadarcă", "Tămâioasă Românească"], subjectType: 'grape', subjectName: 'Zghihară de Huși', explanation: "Zghihară de Huși is a specialty of the Huși DOC in Moldova. Furmint, Cadarcă, and Tămâioasă Românească are all permitted in the Miniș DOC." },
+                        { q: "Which grape is known for its delicate nature and is typically vinified without oak?", a: ["Fetească Albă", "Fetească Regală", "Chardonnay", "Pinot Gris"], subjectType: 'grape', subjectName: 'Fetească Albă', explanation: "The more delicate Fetească Albă is more typically vinified without oak and may be used in blends." },
+                        { q: "Which of these grapes is a white variety?", a: ["Frâncușă", "Fetească Neagră", "Băbească Neagră", "Cadarcă"], subjectType: 'grape', subjectName: 'Frâncușă', explanation: "Frâncușă is a white grape variety, one of the four traditional grapes of the Cotnari blend, known for making crisp, dry wines." },
+                        { q: "Which grape is a relatively new local cross that is NOT red?", a: ["Columna", "Negru de Drăgășani", "Novac", "Codană"], subjectType: 'grape', subjectName: 'Columna', explanation: "Columna is a white grape cross (Pinot Gris x Grasă). Negru de Drăgășani, Novac, and Codană are all red grape crosses." },
+                        { q: "Which grape is NOT a key white variety in the Dealu Mare DOC?", a: ["Crâmpoșie Selecționată", "Chardonnay", "Sauvignon Blanc", "Fetească Albă"], subjectType: 'grape', subjectName: 'Crâmpoșie Selecționată', explanation: "While Crâmpoșie Selecționată is a key grape of Muntenia & Oltenia, it is a specialty of the Drăgășani DOC, not Dealu Mare. Chardonnay, Sauvignon Blanc, and Fetească Albă are all key white varieties in Dealu Mare." },
+                        { q: "Which grape is used to make an elegant, spicy red wine in the Miniș DOC?", a: ["Cadarcă", "Syrah", "Merlot", "Pinot Noir"], subjectType: 'grape', subjectName: 'Cadarcă', explanation: "The indigenous red grape Cadarcă is historically renowned in Miniș for producing elegant, spicy red wines with bright acidity." }
+                    ]
+                },
+                law: {
+                    title: "The Lawmaker's Desk",
+                    instructions: "Answer 10 multiple-choice questions about Romania's wine laws, appellation system, and labeling terms.",
+                    questions: [
+                        { q: "What does DOC stand for in Romanian wine law?", a: ["Denumire de Origine Controlată", "Denumire de Origine Certificată", "Domeniul Originar Controlat", "Denumirea Oficială a Cramei"], explanation: "DOC stands for Denumire de Origine Controlată, the highest quality tier, equivalent to PDO in EU law." },
+                        { q: "What does the term 'DOC-CMD' on a label signify?", a: ["The grapes were harvested at full maturity.", "The wine is a late harvest style.", "The wine is made from botrytized grapes.", "The wine is certified by a master winemaker."], explanation: "DOC-CMD (Cules la Maturitate Deplină) translates to 'Harvested at Full Maturity' and is the standard for quality dry wines." },
+                        { q: "What is the minimum sugar concentration required for grapes to be classified as 'DOC-CIB'?", a: ["240 grams per liter", "187 grams per liter", "220 grams per liter", "200 grams per liter"], explanation: "DOC-CIB (Cules la Înnobilarea Boabelor) requires grapes to be affected by noble rot or raisined, achieving a minimum sugar concentration of 240 g/l." },
+                        { q: "What are the aging requirements for a wine labeled 'Rezervă'?", a: ["Minimum 6 months in oak and 6 months in bottle", "Minimum 1 year in oak and 4 years in bottle", "Minimum 2 years in oak", "Minimum 5 years total aging"], explanation: "A 'Rezervă' wine must be aged for a minimum of six months in oak barrels and a further six months in the bottle before release." },
+                        { q: "What is the highest tier of quality in the Romanian wine classification system?", a: ["Denumire de Origine Controlată (DOC)", "Indicație Geografică (IG)", "Vin de Masă (VM)", "Vin de Vinotecă"], explanation: "Denumire de Origine Controlată (DOC) is the highest tier of quality, corresponding to the EU's Protected Designation of Origin (PDO)." },
+                        { q: "What does 'DOC-CT' signify?", a: ["Cules Târziu (Late Harvest)", "Cules Timpuriu (Early Harvest)", "Controlat Tehnic (Technically Controlled)", "Calitate Tradițională (Traditional Quality)"], explanation: "DOC-CT stands for Cules Târziu, meaning 'Late Harvest'. The grapes are left on the vine longer to accumulate more sugar." },
+                        { q: "What is the minimum must weight for grapes to be classified as DOC-CT?", a: ["220 g/l", "187 g/l", "240 g/l", "213 g/l"], explanation: "DOC-CT (Late Harvest) requires a minimum sugar content of 220 grams per liter at harvest." },
+                        { q: "What are the aging requirements for 'Vin de Vinotecă'?", a: ["Minimum 1 year in oak and 4 years in bottle", "Minimum 6 months in oak and 6 months in bottle", "Minimum 5 years in bottle", "Minimum 3 years in oak"], explanation: "'Vin de Vinotecă' denotes a wine of a particularly high-quality vintage that has been aged for a minimum of one year in oak barrels and at least four years in the bottle." },
+                        { q: "If a PGI/IG wine is labeled with a specific grape variety, what percentage of the grapes must be of that variety?", a: ["85%", "100%", "75%", "51%"], explanation: "For a PGI (IG) wine labeled with a specific grape variety, at least 85% of the grapes must come from that variety." },
+                        { q: "Which term refers to a 'young wine' released for consumption in the same year as the harvest?", a: ["Vin Tânăr", "Vin Vechi", "Rezervă", "Clasic"], explanation: "Vin Tânăr is the term for 'young wine,' similar to the French primeur or nouveau, indicating a wine released in the year of its harvest." },
+                        { q: "What is the EU equivalent of Romania's DOC classification?", a: ["Protected Designation of Origin (PDO)", "Protected Geographical Indication (PGI)", "Traditional Speciality Guaranteed (TSG)", "Table Wine"], explanation: "Denumire de Origine Controlată (DOC) corresponds to the European Union's Protected Designation of Origin (PDO)." },
+                        { q: "What is the minimum must weight for the standard dry wine classification, DOC-CMD?", a: ["187 g/l", "179 g/l", "220 g/l", "240 g/l"], explanation: "DOC-CMD (Harvested at Full Maturity) requires a minimum sugar content of 187 grams per liter at harvest." },
+                        { q: "Which organization is the National Interprofessional Organisation for Vine and Wine in Romania?", a: ["ONIV", "PNVV", "IAS", "DOCG"], explanation: "The Organizația Națională Interprofesională Vitivinicolă (ONIV) is the National Interprofessional Organisation for Vine and Wine." },
+                        { q: "What does 'stafidirea boabelor' mean in the context of DOC-CIB wines?", a: ["Raisined on the vine", "Affected by noble rot", "Fermented in barrel", "Harvested by hand"], explanation: "DOC-CIB wines can be made from grapes affected by noble rot (Botrytis cinerea) or from grapes that have become raisined on the vine, a process known as 'stafidirea boabelor'." },
+                        { q: "What is the EU equivalent of Romania's IG classification?", a: ["Protected Geographical Indication (PGI)", "Protected Designation of Origin (PDO)", "Appellation d'Origine Contrôlée (AOC)", "Vino Nobile"], explanation: "Indicație Geografică (IG) corresponds to the European Union's Protected Geographical Indication (PGI)." },
+                        { q: "What is the minimum alcohol for the broadest category, 'Vin' (Table Wine)?", a: ["8.5% ABV", "9.5% ABV", "10.0% ABV", "11.0% ABV"], explanation: "The 'Vin' (formerly Vin de Masă) category has the fewest regulations, requiring only a minimum alcohol content of 8.5% by volume." },
+                        { q: "What is the minimum must weight for red grapes to be classified as DOC-CT in Dealu Mare?", a: ["213 g/l", "220 g/l", "204 g/l", "240 g/l"], explanation: "In the Dealu Mare DOC, the minimum must weight for red grapes to be classified as DOC-CT (Late Harvest) is 213 g/l." },
+                        { q: "In the Panciu DOC, what is the minimum aging on lees for traditional method sparkling wine?", a: ["3 months", "9 months", "12 months", "18 months"], explanation: "According to the regulations for Vin Spumant de Calitate Panciu, the wines must spend a minimum of 3 months on the lees." },
+                        { q: "What is the maximum permitted yield for Fetească Neagră in Dealu Mare for a DOC-CMD wine?", a: ["59 hl/ha", "65 hl/ha", "78 hl/ha", "91 hl/ha"], explanation: "The maximum yield for Fetească Neagră in Dealu Mare for a DOC-CMD wine is 59 hl/ha, a relatively low limit to ensure quality." },
+                        { q: "Which DOC has a specific regulation for Ice Wine (Vin de gheață)?", a: ["Jidvei", "Dealu Mare", "Cotnari", "Murfatlar"], explanation: "The regulations for the Jidvei DOC include specific rules for Ice Wine, requiring a minimum must weight of 287 g/l and a harvest temperature of -7°C." },
+                        { q: "What is the minimum planting density in the Drăgășani DOC for new plantings?", a: ["4,132 vines per hectare", "3,000 vines per hectare", "2,500 vines per hectare", "5,000 vines per hectare"], explanation: "While the base is 3,200 vines/ha, the regulations for Drăgășani state that a density between 4,132 and 5,500 vines/ha is the new standard for all future plantings." },
+                        { q: "Which of the following is NOT a sub-region of the Dealu Mare DOC?", a: ["Drăgășani", "Valea Călugărească", "Ceptura", "Tohani"], explanation: "Drăgășani is its own separate, important DOC in the Hills of Muntenia and Oltenia. Valea Călugărească, Ceptura, and Tohani are all official sub-regions of Dealu Mare." },
+                        { q: "The term 'Vin Licoros' on a label indicates what style of wine?", a: ["Fortified wine", "Sparkling wine", "Rosé wine", "Young wine"], explanation: "Vin Licoros is the Romanian term for a fortified or liqueur wine, as seen in the regulations for the Cotești DOC." },
+                        { q: "In the Miniș DOC, which three grapes are permitted for the prestigious DOC-CIB classification?", a: ["Cadarcă, Traminer Roz, and Pinot Gris", "Fetească Neagră, Merlot, and Cabernet Sauvignon", "Grasă de Cotnari, Fetească Albă, and Frâncușă", "Sauvignon Blanc, Chardonnay, and Riesling"], explanation: "The regulations for Miniș DOC specify that only Cadarcă, Traminer Roz, and Pinot Gris may be used for the rare DOC-CIB (botrytized/raisined) classification." },
+                        { q: "What is the minimum pressure required for a 'Vin Spumant de Calitate' (quality sparkling wine) from Panciu?", a: ["3.5 atm", "2.5 atm", "6.0 atm", "1.0 atm"], explanation: "Traditional method sparkling wine from Panciu (Vin Spumant de Calitate) must have a minimum pressure of 3.5 atmospheres." },
+                        { q: "What does PNVV stand for?", a: ["Patronatul Național al Viei și Vinului (National Vineyard and Wine Employers' Association)", "Producătorii Naționali de Vinuri Vrac (National Bulk Wine Producers)", "Piața Națională a Vinului și Viei (National Market of Wine and Vine)", "Programul Național de Viticultură și Vinificație (National Viticulture and Winemaking Program)"], explanation: "The PNVV is the Patronatul Național al Viei și Vinului, or the National Vineyard and Wine Employers' Association, a key industry organization." },
+                        { q: "Which of these is NOT a recognized IG (PGI) appellation in Romania?", a: ["Valea Oltului", "Colinele Dobrogei", "Terasele Dunării", "Dealurile Moldovei"], explanation: "Colinele Dobrogei, Terasele Dunării, and Dealurile Moldovei are all official IG (PGI) appellations. Valea Oltului is a geographical feature but not a designated IG." },
+                        { q: "In the Cotnari DOC, the traditional blend consists of how many grape varieties?", a: ["Four", "Two", "Three", "Five"], explanation: "The traditional 'recipe' for Cotnari wine consists of a specific blend of four indigenous white grape varieties: Grasă de Cotnari, Fetească Albă, Frâncușă, and Tămâioasă Românească." },
+                        { q: "What is the maximum residual sugar for a wine to be labeled 'Sec' (Dry)?", a: ["4 g/l", "9 g/l", "12 g/l", "0 g/l"], explanation: "A wine labeled 'Sec' (Dry) can have a maximum of 4 g/l of residual sugar, though this can be higher if the acidity is also high." },
+                        { q: "Which DOC allows for the use of the Italian grape Sangiovese?", a: ["Dealu Mare", "Cotnari", "Târnave", "Miniș"], explanation: "The regulations for the Dealu Mare DOC are quite extensive and permit the use of many international varieties, including the Italian grape Sangiovese." },
+                        { q: "What is the minimum must weight for red grapes to be classified as DOC-CMD in Drăgășani?", a: ["204 g/l", "187 g/l", "213 g/l", "220 g/l"], explanation: "In the Drăgășani DOC, red grapes require a higher level of ripeness for the standard dry classification, with a minimum must weight of 204 g/l for DOC-CMD." },
+                        { q: "What does 'Vin Perlant' mean?", a: ["Frizzante wine", "Still wine", "Fortified wine", "Ice wine"], explanation: "Vin Perlant is the Romanian term for a frizzante or semi-sparkling wine, as permitted in the Cotești DOC." },
+                        { q: "What is the minimum planting density for the Aiud DOC in Transylvania?", a: ["3,500 vines per hectare", "3,000 vines per hectare", "4,000 vines per hectare", "2,500 vines per hectare"], explanation: "The regulations for the Aiud DOC in the cool climate of Transylvania mandate a minimum planting density of 3,500 vines per hectare." },
+                        { q: "Which DOC regulations specifically mention the subregion 'Valea Călugărească'?", a: ["Dealu Mare", "Drăgășani", "Sâmburești", "Pietroasa"], explanation: "Valea Călugărească is a famous viticultural center and an official subzone of the Dealu Mare DOC, and its name can appear on the label." },
+                        { q: "What is the minimum alcohol for a red DOC-CMD wine from Banu Mărăcine?", a: ["12%", "11%", "12.5%", "13%"], explanation: "In the Banu Mărăcine DOC, red wines must achieve a minimum alcohol of 12% to be classified as DOC-CMD, a higher requirement than for white wines (11%)." },
+                        { q: "Which is the only style of wine permitted in the Alba Iulia DOC?", a: ["White wines only", "Red wines only", "Sparkling wines only", "Red and White wines"], explanation: "The regulations for the Alba Iulia DOC in Transylvania specify that it is for white wines only." },
+                        { q: "In the Oltina DOC, what is the minimum must weight for a 'Demidulce' (semi-sweet) DOC-CMD wine?", a: ["200 g/l", "187 g/l", "192 g/l", "220 g/l"], explanation: "The Oltina DOC has specific ripeness requirements based on sweetness. A DOC-CMD Demidulce wine requires a minimum must weight of 200 g/l, higher than for Sec (187 g/l) or Demisec (192 g/l)." },
+                        { q: "Which of these is NOT a subregion of the Târnave DOC?", a: ["Lechința", "Blaj", "Jidvei", "Medias"], explanation: "Lechința is its own separate DOC within the Transylvanian Plateau. Blaj, Jidvei, and Medias are all official subzones of the Târnave DOC." },
+                        { q: "What does the term 'Vin de Calitate Aromat' refer to in the Dealu Mare regulations?", a: ["Sparkling wine from aromatic grapes", "Still wine from aromatic grapes", "Fortified wine with added aromas", "A sweet dessert wine"], explanation: "'Vin de Calitate Aromat' is a specific classification for quality sparkling wine made from aromatic grape varieties like Muscat Ottonel or Tămâioasă Românească." },
+                        { q: "Which DOC allows for the use of the grape variety Syrah?", a: ["All of the below", "Dealu Mare", "Drăgășani", "Recaș"], explanation: "Syrah is an adaptable international variety that is legally permitted in many of Romania's warmer DOCs, including Dealu Mare, Drăgășani, and Recaș." },
+                        { q: "What is the minimum must weight for a white DOC-CT wine in Crișana?", a: ["220 g/l", "213 g/l", "187 g/l", "240 g/l"], explanation: "In the Crișana DOC, white grapes intended for a Late Harvest (DOC-CT) wine must have a minimum must weight of 220 g/l." },
+                        { q: "The term 'brut natur' on a sparkling wine label indicates a residual sugar level of what?", a: ["Maximum 3 g/l", "0-6 g/l", "Maximum 12 g/l", "12-17 g/l"], explanation: "As per EU standards adopted by Romania (e.g., in the Târnave sparkling wine DOC), 'brut natur' is the driest category, with a maximum of 3 g/l of residual sugar." },
+                        { q: "Which of the following is NOT a recognized subregion of the Mehedinți DOC?", a: ["Segarcea", "Severin", "Corcova", "Vânju Mare"], explanation: "Segarcea is its own distinct DOC. Severin, Corcova, and Vânju Mare are all official subregions of the Mehedinți DOC." },
+                        { q: "What is the maximum yield for Chardonnay in the Aiud DOC for a DOC-CMD wine?", a: ["66 hl/ha", "93 hl/ha", "80 hl/ha", "53 hl/ha"], explanation: "The Aiud DOC has strict yield limits to ensure quality. For a high-quality grape like Chardonnay, the maximum yield for a DOC-CMD wine is set at a low 66 hl/ha." },
+                        { q: "Which DOC's regulations specifically list the grape variety 'Tămâioasă Roză'?", a: ["Segarcea", "Dealu Mare", "Drăgășani", "Murfatlar"], explanation: "The rare, pink-skinned Tămâioasă Roză is a specialty of the Segarcea estate and is specifically listed in the official regulations for the Segarcea DOC." },
+                        { q: "What is the minimum alcohol for a red DOC-CT wine from Sâmburești?", a: ["12.5%", "12%", "13%", "11.5%"], explanation: "The Sâmburești DOC has specific alcohol requirements; a red DOC-CT (Late Harvest) wine must reach a minimum of 12.5% alcohol." },
+                        { q: "Which DOC is NOT located in the Dealurile Moldovei (Hills of Moldova) region?", a: ["Recaș", "Cotnari", "Huși", "Panciu"], explanation: "Recaș is the primary DOC of the Banat region in the far southwest. Cotnari, Huși, and Panciu are all major DOCs within the vast Hills of Moldova region." },
+                        { q: "What is the minimum alcohol for a DOC-CMD wine from Pietroasa?", a: ["11%", "12%", "10.5%", "11.5%"], explanation: "The regulations for the Pietroasa DOC state a minimum alcohol level of 11% for wines classified as DOC-CMD." },
+                        { q: "Which of these is NOT a recognized wine style in the Jidvei DOC regulations?", a: ["Vin de Paie (Straw Wine)", "Quality sparkling wine", "Ice Wine", "Liqueur wine"], explanation: "The Jidvei DOC regulations are extensive, covering sparkling, ice, and liqueur wines, but they do not include a specific category for Vin de Paie (Straw Wine)." },
+                        { q: "What is the minimum must weight for a red DOC-CT wine in the Banat DOC?", a: ["213 g/l", "220 g/l", "204 g/l", "187 g/l"], explanation: "In the Banat DOC, the minimum must weight for red grapes to be classified as DOC-CT (Late Harvest) is 213 g/l." }
+                    ]
+                },
+                gastronomy: {
+                    title: "The Gastronome's Table",
+                    instructions: "Answer 10 multiple-choice questions about Romanian cuisine and classic food & wine pairings. After each answer, an explanation will appear. You may have an AI option to learn more.",
+                    questions: [
+                        { q: "What is 'sarmale', a staple dish in Muntenia and Oltenia?", a: ["Minced pork and rice wrapped in pickled cabbage leaves", "Grilled skinless sausages", "A rich pork stew", "Leek and olive stew"], subjectType: 'dish', subjectName: 'Sarmale', explanation: "Sarmale are rolls made of minced pork and rice wrapped in pickled cabbage leaves, a hearty dish perfect for the region's robust red wines." },
+                        { q: "A full-bodied, spicy Fetească Neagră from Dealu Mare is a classic pairing for which rich pork dish?", a: ["Tochitură", "Ciorbă de pește", "Saramură de crap", "Goulash"], subjectType: 'wine_pairing', subjectName: 'Fetească Neagră and Tochitură', explanation: "The robust structure and spicy notes of a Dealu Mare Fetească Neagră stand up perfectly to the rich, savory flavors of Tochitură, a traditional pork stew." },
+                        { q: "In the Oltenia region, what is the signature vegetable ingredient, featured in dishes like 'mâncare de praz cu măsline'?", a: ["Leeks (praz)", "Potatoes", "Cabbage", "Bell Peppers"], subjectType: 'ingredient', subjectName: 'Praz (Leeks)', explanation: "Leeks, known as 'praz' in Romanian, are a signature ingredient in the cuisine of Oltenia." },
+                        { q: "A crisp, high-acid Crâmpoșie Selecționată from Drăgășani is an ideal pairing for what type of food?", a: ["Grilled river fish or poultry", "Aged hard cheeses", "Spicy goulash", "Rich chocolate desserts"], subjectType: 'wine_pairing', subjectName: 'Crâmpoșie Selecționată and Fish', explanation: "The high acidity and fresh apple notes of a Crâmpoșie Selecționată cut beautifully through the richness of poultry or complement the delicate flavors of grilled river fish." },
+                        { q: "The cuisine of Dobrogea, given its location, is heavily based on what?", a: ["Fish from the Black Sea and Danube Delta", "Smoked meats from the mountains", "Dairy products from the plateau", "Root vegetables from the plains"], subjectType: 'place', subjectName: 'Cuisine of Dobrogea', explanation: "Dobrogea's location between the Black Sea and the Danube Delta means its cuisine is dominated by fresh fish." },
+                        { q: "What is 'saramură de crap', an iconic dish from the Danube regions?", a: ["Grilled carp served in a flavorful garlic brine", "Smoked mackerel", "A rich and varied fish soup", "Layered cabbage and meat casserole"], subjectType: 'dish', subjectName: 'Saramură de crap', explanation: "Saramură de crap is a classic dish from the Danube regions, consisting of grilled carp served in a savory, garlicky brine." },
+                        { q: "A full-bodied, oaked Chardonnay from Murfatlar is a perfect match for which dish?", a: ["Grilled sturgeon", "Mici sausages", "Cozonac sweet bread", "Tochitură Moldovenească"], subjectType: 'wine_pairing', subjectName: 'Murfatlar Chardonnay and Sturgeon', explanation: "The weight and texture of an oaked Chardonnay from Murfatlar complement the rich, meaty texture of grilled sturgeon." },
+                        { q: "The cuisine of Crișana and Maramureș shows heavy influence from which culture?", a: ["Austrian, German, and Hungarian", "Turkish and Greek", "Russian and Ukrainian", "Italian and French"], subjectType: 'place', subjectName: 'Cuisine of Crișana and Maramureș', explanation: "The cuisine of Crișana and Maramureș is heavily influenced by its historical ties to the Austro-Hungarian Empire, resulting in hearty dishes with Austrian, German, and Hungarian characteristics." },
+                        { q: "A spicy, red-fruited Cadarcă from Miniș is a superb match for which dish?", a: ["Hungarian-style goulash", "Ciorbă de pește", "Salată de vinete", "Papanași"], subjectType: 'wine_pairing', subjectName: 'Cadarcă and Goulash', explanation: "The bright acidity and spicy red fruit character of a Cadarcă from Miniș beautifully complement the rich, paprika-spiced flavors of a Hungarian-style goulash." },
+                        { q: "A classic sweet Grasă de Cotnari (DOC-CIB) is a sublime partner for what?", a: ["Blue cheese or cozonac", "Grilled steak", "Oysters", "Spicy sausage"], subjectType: 'wine_pairing', subjectName: 'Grasă de Cotnari and Dessert/Cheese', explanation: "The luscious sweetness and complexity of a botrytized Grasă de Cotnari can be paired with desserts like cozonac (sweet bread) or contrasted beautifully with a salty, pungent blue cheese." },
+                        { q: "What are 'mici', a popular grilled dish in Romania?", a: ["Skinless sausages made from a mix of pork, beef, and lamb", "Cabbage rolls", "Polenta cakes", "Fried cheese"], subjectType: 'dish', subjectName: 'Mici', explanation: "Mici are grilled, skinless sausages, a beloved staple of Romanian cuisine, often enjoyed with mustard and bread." },
+                        { q: "The cuisine of Moldova is designed to withstand its cold winters and often features which central ingredient?", a: ["Pork", "Fish", "Lamb", "Chicken"], subjectType: 'place', subjectName: 'Cuisine of Moldova', explanation: "The cuisine of Moldova is hearty and satisfying, with pork being a central ingredient in dishes like tochitură moldovenească." },
+                        { q: "A dry, high-acid Zghihară de Huși is an ideal match for what?", a: ["Grilled freshwater fish", "Rich pork stew", "Creamy pasta", "Chocolate cake"], subjectType: 'wine_pairing', subjectName: 'Zghihară de Huși and Fish', explanation: "A dry, high-acid Zghihară de Huși is an ideal match for grilled freshwater fish, its crispness cutting through any richness." },
+                        { q: "Transylvanian cuisine is a fusion of Romanian, Hungarian, and which other tradition?", a: ["German (Saxon)", "Turkish", "Greek", "Polish"], subjectType: 'place', subjectName: 'Cuisine of Transylvania', explanation: "Transylvanian cuisine is a rich fusion of Romanian, Hungarian, and German (Saxon) traditions, reflecting the region's history of settlement." },
+                        { q: "What is 'varză à la Cluj'?", a: ["A layered cabbage and minced meat casserole", "A smoked pork soup", "A sweet cheese pastry", "A spicy vegetable stew"], subjectType: 'dish', subjectName: 'Varză à la Cluj', explanation: "Varză à la Cluj is a signature Transylvanian dish, a hearty baked casserole of layered cabbage and savory minced meat." },
+                        { q: "An elegant, earthy Pinot Noir from Transylvania is an excellent companion for which dish?", a: ["Mushroom-based dishes", "Spicy fish soup", "Oysters on the half shell", "Citrus salad"], subjectType: 'wine_pairing', subjectName: 'Transylvanian Pinot Noir and Mushrooms', explanation: "The earthy notes of a cool-climate Pinot Noir from Transylvania pair wonderfully with the savory, umami flavors of mushroom-based dishes." },
+                        { q: "The culinary traditions of Dobrogea show strong influences from which cultures, besides Greek?", a: ["Turkish and Tartar", "French and Italian", "Slavic and Polish", "German and Austrian"], subjectType: 'place', subjectName: 'Cuisine of Dobrogea', explanation: "Dobrogea's cuisine shows strong Turkish, Tartar, and Greek influences from centuries of cultural exchange on the Black Sea coast." },
+                        { q: "The cuisine of Banat is hearty and nourishing, reflecting influences from Serbian, Hungarian, and which other tradition?", a: ["German (Swabian)", "Italian", "French", "Bulgarian"], subjectType: 'place', subjectName: 'Cuisine of Banat', explanation: "The cuisine of Banat reflects the diverse cultural influences of the region, including Serbian, Hungarian, and German (Swabian) traditions." },
+                        { q: "What is 'iofca', a staple dish in the Banat region?", a: ["Home-made noodles with cabbage, nuts, or poppy seeds", "A grilled fish platter", "A spicy pork sausage", "A sweet bread with cheese"], subjectType: 'dish', subjectName: 'Iofca', explanation: "Iofca is a staple noodle dish in Banat, showcasing the Central European influence on the region's cuisine." },
+                        { q: "What is the classic wine pairing for 'saramură de crap'?", a: ["A crisp, high-acid Aligoté or unoaked Chardonnay", "A powerful, tannic Cabernet Sauvignon", "A sweet, botrytized Grasă de Cotnari", "A light-bodied Băbească Neagră"], subjectType: 'wine_pairing', subjectName: 'Wine pairing for Saramură de crap', explanation: "A crisp, high-acid white wine like Aligoté or an unoaked Chardonnay is the classic pairing for saramură de crap, as the wine's acidity cuts through the richness of the fish and complements the garlic brine." },
+                        { q: "What is 'mămăligă'?", a: ["Polenta", "A type of bread", "A cheese pastry", "A meat stew"], subjectType: 'dish', subjectName: 'Mămăligă', explanation: "Mămăligă is the Romanian name for polenta, a staple dish made from cornmeal that is served alongside many savory dishes like sarmale and tochitură." },
+                        { q: "What is 'cozonac'?", a: ["A traditional sweet bread with walnuts and cocoa", "A sour soup", "A type of sausage", "A cheese dish"], subjectType: 'dish', subjectName: 'Cozonac', explanation: "Cozonac is a traditional sweet bread, similar to a brioche or panettone, often filled with walnuts, cocoa, or poppy seeds. It's a classic pairing for sweet Cotnari wines." },
+                        { q: "What is 'ciorbă de pește'?", a: ["A rich and varied fish soup", "Grilled fish", "Smoked fish", "Fish paste"], subjectType: 'dish', subjectName: 'Ciorbă de pește', explanation: "Ciorbă de pește is an iconic fish soup, particularly in the Danube Delta and Dobrogea, known for its rich and varied flavors." },
+                        { q: "A ripe, fruit-forward Merlot from Dobrogea would pair well with what traditional dish?", a: ["Mutton", "Oysters", "Salad", "Light chicken"], subjectType: 'wine_pairing', subjectName: 'Dobrogea Merlot and Mutton', explanation: "Mutton is a staple in the interior of Dobrogea, and a ripe, fruit-forward Merlot from the region has the body and flavor to pair well with it." },
+                        { q: "What is a key flavor characteristic of Transylvanian cuisine?", a: ["Use of smoked meats and sour cream", "Heavy use of olive oil and lemon", "Spicy chili and cilantro", "Sweet and sour sauces"], subjectType: 'place', subjectName: 'Cuisine of Transylvania', explanation: "Transylvanian food is often characterized by the use of smoked meats, dairy products (especially sour cream), and spices like paprika and caraway." },
+                        { q: "What is 'papricas', a common dish in the Banat region?", a: ["A paprika-based stew", "A noodle dish", "A type of bread", "A dessert"], subjectType: 'dish', subjectName: 'Papricas', explanation: "Reflecting Hungarian influence, papricas (a paprika-based stew, often with chicken or pork) is very common in the Banat region." },
+                        { q: "The high acidity of a sparkling wine from Carastelec (Crișana) would be a good pairing for what?", a: ["Fried dishes or creamy sauces", "Grilled steak", "Spicy curry", "Dark chocolate"], subjectType: 'wine_pairing', subjectName: 'Crișana Sparkling Wine and Fried Food', explanation: "The high acidity and effervescence of a sparkling wine from Crișana would cut through the richness of fried dishes or creamy sauces like Piparaica." },
+                        { q: "What is 'pomana porcului'?", a: ["A traditional feast of various fresh pork cuts", "A type of pork sausage", "A pork and cabbage stew", "A cured ham"], subjectType: 'dish', subjectName: 'Pomana porcului', explanation: "Pomana porcului is a traditional feast held after the winter pig slaughter, featuring various cuts of fresh pork, fried and served immediately. It's a classic pairing for a robust Fetească Neagră." },
+                        { q: "What is 'scrumbie de Dunăre'?", a: ["Danube mackerel, often smoked", "Danube sturgeon, often grilled", "Danube carp, served in brine", "Danube catfish soup"], subjectType: 'dish', subjectName: 'Scrumbie de Dunăre', explanation: "Scrumbie de Dunăre is Danube mackerel, an iconic fish from the region that is often smoked." },
+                        { q: "A powerful, structured Cabernet Sauvignon-based blend from Sâmburești is an ideal partner for what?", a: ["Grilled lamb or aged hard cheeses", "Delicate white fish", "Light salads", "Sweet fruit tarts"], subjectType: 'wine_pairing', subjectName: 'Sâmburești Cabernet and Lamb', explanation: "The tannins and structure of a powerful Cabernet Sauvignon blend from a region like Sâmburești make it an ideal partner for protein-rich foods like grilled lamb or aged hard cheeses." },
+                        { q: "What is 'tochitură moldovenească'?", a: ["A rich pork stew served with mămăligă and a fried egg", "A sweet cheese pastry", "A cold vegetable salad", "A light chicken soup"], subjectType: 'dish', subjectName: 'Tochitură moldovenească', explanation: "Tochitură moldovenească is the Moldovan version of the rich pork stew, characteristically served with mămăligă (polenta) and a fried egg on top." },
+                        { q: "An off-dry Pinot Gris from Transylvania can beautifully balance what?", a: ["The spice of a traditional goulash", "The saltiness of an oyster", "The bitterness of dark chocolate", "The acidity of a lemon tart"], subjectType: 'wine_pairing', subjectName: 'Transylvanian Pinot Gris and Goulash', explanation: "The slight residual sugar and rich texture of an off-dry Pinot Gris from Transylvania can beautifully balance the heat and spice of a traditional paprika-laden goulash." },
+                        { q: "What is 'Piparaica', a local specialty of Crișana?", a: ["A creamy dish made with garlic and sour cream", "A spicy sausage", "A fruit brandy", "A type of cheese"], subjectType: 'dish', subjectName: 'Piparaica', explanation: "Piparaica is a creamy dish from Crișana made with garlic and sour cream, often served with bacon or sausages, showcasing the region's hearty, Central European-influenced cuisine." },
+                        { q: "The cuisine of the Danube Terraces is dominated by what?", a: ["The bounty of the river (freshwater fish)", "Foraged mushrooms and berries", "Cured meats and sausages", "Aged cheeses and dairy"], subjectType: 'place', subjectName: 'Cuisine of the Danube Terraces', explanation: "Unsurprisingly, the cuisine of the Danube Terraces is dominated by the bounty of the river, with freshwater fish like carp and sturgeon being the star of the local gastronomy." },
+                        { q: "A juicy, fruit-forward red blend from Recaș would be an excellent partner for what Banat dish?", a: ["A rich pork papricas or goulash", "A light fish soup", "A simple green salad", "A fruit sorbet"], subjectType: 'wine_pairing', subjectName: 'Recaș Red Blend and Papricas', explanation: "A juicy, fruit-forward red blend from Recaș, often based on Merlot, has the flavor intensity and soft tannins to be an excellent partner for a rich pork papricas or goulash from the Banat region." },
+                        { q: "Which of these is NOT a typical ingredient in Transylvanian cuisine?", a: ["Olive oil", "Smoked meats", "Sour cream", "Paprika"], subjectType: 'ingredient', subjectName: 'Olive oil', explanation: "Transylvanian cuisine is characterized by smoked meats, dairy like sour cream, and spices like paprika. Olive oil is characteristic of Mediterranean cuisines, not the continental climate of Transylvania." },
+                        { q: "What is the typical accompaniment for many savory Romanian dishes like sarmale and tochitură?", a: ["Mămăligă (polenta)", "Rice pilaf", "Couscous", "French fries"], subjectType: 'dish', subjectName: 'Mămăligă', explanation: "Mămăligă, or polenta, is the quintessential side dish in Romanian cuisine, served with a wide variety of stews and other main courses." },
+                        { q: "Which region's cuisine shows strong Turkish and Tartar influences?", a: ["Dobrogea", "Transylvania", "Maramureș", "Banat"], subjectType: 'place', subjectName: 'Cuisine of Dobrogea', explanation: "Due to its history and location on the Black Sea, the cuisine of Dobrogea shows strong Turkish, Tartar, and Greek influences." },
+                        { q: "Which dish is a layered casserole, famous in Transylvania?", a: ["Varză à la Cluj", "Tochitură", "Saramură", "Mici"], subjectType: 'dish', subjectName: 'Varză à la Cluj', explanation: "Varză à la Cluj is a famous Transylvanian dish, a baked casserole made of layered savory cabbage and minced meat." },
+                        { q: "What is a classic pairing for a full-bodied Fetească Neagră from Iași or Cotești?", a: ["Tochitură moldovenească", "Oysters", "Sushi", "Fruit salad"], subjectType: 'wine_pairing', subjectName: 'Fetească Neagră and Tochitură moldovenească', explanation: "A full-bodied Fetească Neagră from the Moldova region would pair wonderfully with the hearty, savory flavors of a tochitură moldovenească." },
+                        { q: "Which food is NOT typically paired with a crisp, high-acid white wine like Crâmpoșie Selecționată?", a: ["Rich chocolate cake", "Grilled river fish", "Poultry dishes", "Fresh salads"], subjectType: 'wine_pairing', subjectName: 'Crâmpoșie Selecționată pairings', explanation: "The high acidity of Crâmpoșie Selecționată is designed to cut through richness and complement lighter fare; it would clash with a rich, sweet chocolate cake." },
+                        { q: "What is the primary meat used in the cuisine of Muntenia, Oltenia, and Moldova?", a: ["Pork", "Lamb", "Beef", "Fish"], subjectType: 'ingredient', subjectName: 'Pork', explanation: "Pork is the central and dominant meat in the hearty, rustic cuisines of Muntenia, Oltenia, and Moldova." },
+                        { q: "A crisp, aromatic Fetească Regală from Banat would provide a refreshing contrast to what?", a: ["Hearty sausages and noodle dishes", "Spicy curry", "Sweet desserts", "Grilled steak"], subjectType: 'wine_pairing', subjectName: 'Fetească Regală and Sausages', explanation: "A crisp, aromatic Fetească Regală from the Banat region would provide a refreshing contrast to the hearty, savory flavors of local sausages and noodle dishes like iofca." },
+                        { q: "Which of these is a sweet bread, not a savory dish?", a: ["Cozonac", "Sarmale", "Mici", "Tochitură"], subjectType: 'dish', subjectName: 'Cozonac', explanation: "Cozonac is a traditional sweet bread, while sarmale, mici, and tochitură are all savory main dishes." },
+                        { q: "What is a key ingredient in the brine for 'saramură de crap'?", a: ["Garlic", "Cinnamon", "Sugar", "Mint"], subjectType: 'ingredient', subjectName: 'Garlic', explanation: "Saramură de crap is defined by its flavorful, savory brine, in which garlic is a key and prominent ingredient." },
+                        { q: "The dish 'goulash' in Transylvania shows the influence of which culture?", a: ["Hungarian", "Turkish", "Greek", "Russian"], subjectType: 'dish', subjectName: 'Goulash', explanation: "Goulash, a rich meat and paprika stew, is a classic dish showing the strong Hungarian cultural and culinary influence in Transylvania." },
+                        { q: "Which wine would be out of place paired with a light dish of grilled white fish?", a: ["A powerful, tannic Cabernet Sauvignon from Sâmburești", "A crisp Sauvignon Blanc from Transylvania", "A zesty Zghihară de Huși", "An unoaked Chardonnay from the Danube Terraces"], subjectType: 'wine_pairing', subjectName: 'Wine pairing for white fish', explanation: "A powerful, tannic red wine like a Sâmburești Cabernet Sauvignon would overwhelm the delicate flavors of a light white fish dish." },
+                        { q: "What is the most common way to prepare 'scrumbie de Dunăre'?", a: ["Smoked", "Fried", "Boiled", "Raw"], subjectType: 'dish', subjectName: 'Scrumbie de Dunăre', explanation: "Scrumbie de Dunăre (Danube mackerel) is an iconic fish from the region that is very often prepared by smoking." },
+                        { q: "Which region's cuisine is NOT heavily influenced by its proximity to the former Austro-Hungarian Empire?", a: ["Dobrogea", "Crișana", "Maramureș", "Banat"], subjectType: 'place', subjectName: 'Cuisine of Dobrogea', explanation: "The cuisines of Crișana, Maramureș, and Banat all show strong Austro-Hungarian influence. Dobrogea's cuisine, on the Black Sea coast, is more influenced by Greek, Turkish, and Tartar traditions." },
+                        { q: "Which of these pairings is based on the principle of contrast?", a: ["Sweet Grasă de Cotnari with salty blue cheese", "Earthy Pinot Noir with mushrooms", "Robust Fetească Neagră with rich pork stew", "Oaked Chardonnay with grilled sturgeon"], subjectType: 'wine_pairing', subjectName: 'Sweet and Salty Pairing', explanation: "Pairing a sweet wine like Grasă de Cotnari with a salty blue cheese is a classic example of a contrasting pairing, where the two opposing flavors enhance each other." }
+                    ]
+                },
+                critic: {
+                    title: "The Critic's Corner",
+                    instructions: "Answer 10 multiple-choice questions about Romania's key producers, market context, and modern trends. After a correct answer, you may have an AI option to generate a tasting note or profile.",
+                    questions: [
+                        { q: "Which winery, a Romanian-British company established in 1991, is the country's largest exporter of bottled wine?", a: ["Cramele Recaș", "Jidvei", "Cotnari", "SERVE"], subjectType: 'producer', subjectName: 'Cramele Recaș', explanation: "Cramele Recaș, established in 1991, is a Romanian-British company that has become a dominant force, being Romania's top producer by turnover and largest exporter." },
+                        { q: "Which titan of the industry manages over 2,500 hectares in the Târnave DOC and is a leader in dry white and sparkling wines?", a: ["Jidvei", "Cramele Recaș", "Vinarte", "Budureasca"], subjectType: 'producer', subjectName: 'Jidvei', explanation: "Jidvei is a titan of the Romanian wine industry, managing over 2,500 hectares of vineyards, primarily in the Târnave DOC, and specializing in white and sparkling wines." },
+                        { q: "Who was the pioneering French nobleman who founded the SERVE winery in the Dealu Mare region in 1994?", a: ["Count Guy de Poix", "Baron Philippe de Rothschild", "Aurelia Vișinescu", "Philip Cox"], subjectType: 'producer', subjectName: 'SERVE', explanation: "French nobleman Count Guy de Poix was a key foreign investor who founded SERVE in the Dealu Mare region in 1994, laying crucial groundwork for the quality revolution." },
+                        { q: "Which major challenge does the Romanian wine industry face in international markets?", a: ["Lack of a cohesive national brand identity", "Excessively high prices", "A single, dominant grape variety", "Lack of domestic consumption"], explanation: "Despite the surge in quality, Romania still struggles to project a clear, unified identity, which makes it difficult for consumers to grasp what Romanian wine represents." },
+                        { q: "What is considered Romania's most powerful asset and Unique Selling Proposition (USP) in the global market?", a: ["Its wealth of unique indigenous grape varieties", "Its production of bulk Chardonnay", "Its history of communist-era wines", "Its high-alcohol red blends"], explanation: "In a market saturated with international varieties, Romania's wealth of unique indigenous grapes like Fetească Neagră is its most powerful asset and key differentiator." },
+                        { q: "Which winery, located in Drăgășani, meticulously restored the historic Vila Dobrușa manor and is a symbol of the modern renaissance?", a: ["AVINCIS", "Lacerta", "Domeniul Coroanei Segarcea", "Balla Géza"], subjectType: 'producer', subjectName: 'AVINCIS', explanation: "The rebirth of the Drăgășani region is epitomized by AVINCIS, a family-owned estate that has meticulously restored the historic Vila Dobrușa manor and vineyards." },
+                        { q: "Which winemaker at Domeniile Săhăteni is a key figure known for pioneering work with dry, oak-aged Fetească Neagră?", a: ["Aurelia Vișinescu", "Hartley Smithers", "Balla Géza", "Stephen Donnelly"], subjectType: 'producer', subjectName: 'Aurelia Vișinescu', explanation: "Winemaker Aurelia Vișinescu at Domeniile Săhăteni (in Dealu Mare) is a key figure, known for her pioneering work with dry, oak-aged Fetească Neagră." },
+                        { q: "The Antinori family, famous in Tuscany, is behind which project in Dealu Mare?", a: ["Viile Metamorfosis", "Davino", "Budureasca", "SERVE"], subjectType: 'producer', subjectName: 'Viile Metamorfosis', explanation: "The renowned Antinori family of Tuscany is behind the Viile Metamorfosis project in the Dealu Mare region." },
+                        { q: "Which emerging trend involves a commitment to environmental stewardship, with wineries like Domeniul Bogdan leading the way?", a: ["Organic and Biodynamic Viticulture", "Increased use of pesticides", "Focus on high-yield hybrids", "A shift to sweet wine production"], explanation: "A growing number of producers are adopting sustainable, organic, and biodynamic farming practices, a key trend in the modern industry." },
+                        { q: "What is the approximate percentage of Romanian wine that is consumed domestically?", a: ["95%", "50%", "25%", "75%"], explanation: "The strong Romanian domestic market absorbs approximately 95% of all wine produced in the country." },
+                        { q: "Which winery is a pioneer in producing high-quality traditional method sparkling wines in the Crișana region?", a: ["Carastelec", "Balla Géza", "Cramele Recaș", "Jidvei"], subjectType: 'producer', subjectName: 'Carastelec', explanation: "Carastelec winery in Crișana is a pioneer, being the first to be established with a primary focus on producing high-quality traditional method sparkling wines." },
+                        { q: "Who is the leading figure in the revival of the Miniș DOC, championing indigenous varieties like Cadarcă?", a: ["Balla Géza", "Philip Cox", "Jean Valvis", "Count Guy de Poix"], subjectType: 'producer', subjectName: 'Balla Géza', explanation: "Winemaker Balla Géza is a leading figure in the revival of DOC Miniș and a passionate advocate for the region's indigenous varieties like Cadarcă and Fetească Neagră." },
+                        { q: "Which historic estate in Sâmburești, now owned by Jean Valvis, was once owned by the influential Brătianu political family?", a: ["Domeniile Sâmburești", "Domeniul Coroanei Segarcea", "AVINCIS", "Vinarte"], subjectType: 'producer', subjectName: 'Domeniile Sâmburești', explanation: "Domeniile Sâmburești is a historic estate, once owned by the Brătianu family and now owned by Jean Valvis, known for its powerful red blends." },
+                        { q: "Which large producer in the Cotnari DOC maintains a massive wine library (vinotecă) with over a million bottles?", a: ["Casa de Vinuri Cotnari", "Jidvei", "Cramele Recaș", "Domeniile Averești"], subjectType: 'producer', subjectName: 'Casa de Vinuri Cotnari', explanation: "The dominant producer in Cotnari, Casa de Vinuri Cotnari, maintains a massive wine library (vinotecă) with over a million bottles, showcasing the wines' aging potential." },
+                        { q: "Which producer is NOT considered one of the 'new wave' of smaller, premium, terroir-driven wineries in Transylvania?", a: ["Jidvei", "Liliac", "Villa Vinea", "Lechburg"], subjectType: 'producer', subjectName: 'Jidvei', explanation: "Jidvei is a titan of the industry, a very large-scale producer. Liliac, Villa Vinea, and Lechburg represent the new wave of smaller, boutique estates focused on premium, terroir-driven wines in Transylvania." },
+                        { q: "What is a major barrier for Romanian wine with older consumers in markets like the UK and Germany?", a: ["The memory of cheap, mass-produced communist-era wine", "The wines are too expensive", "The labels are hard to read", "The wines are not available"], explanation: "For older consumers, the memory of cheap, mediocre, mass-produced Romanian wine from the communist era can be a significant barrier, even though the quality is now much higher." },
+                        { q: "Which producer is a leader in the Huși region, championing the unique local variety Zghihară de Huși?", a: ["Domeniile Averești", "Casa de Vinuri Cotnari", "Jidvei", "AVINCIS"], subjectType: 'producer', subjectName: 'Domeniile Averești', explanation: "Domeniile Averești is a leading producer in the Huși region and is known for championing the crisp, high-acid indigenous grape Zghihară de Huși." },
+                        { q: "The winery Vinarte, established by Italian entrepreneur Sergio Faleschini, has a key winery named Castel Stârmina in which DOC?", a: ["Mehedinți", "Dealu Mare", "Drăgășani", "Segarcea"], subjectType: 'producer', subjectName: 'Vinarte', explanation: "Vinarte, one of the early quality-focused ventures, operates the Castel Stârmina winery in the Mehedinți DOC." },
+                        { q: "What is the primary business advantage that Romanian wines currently offer in the global market?", a: ["An outstanding quality-to-price ratio", "The highest alcohol levels", "The oldest vintages available", "The most recognizable labels"], explanation: "At nearly every quality level, Romanian wines offer an outstanding quality-to-price ratio, making them a highly attractive value proposition." },
+                        { q: "Which of these is NOT one of the top 5 largest producers that dominate the domestic market?", a: ["Davino", "Cramele Recaș", "Jidvei", "Cotnari"], subjectType: 'producer', subjectName: 'Davino', explanation: "Davino is a highly respected, benchmark-setting boutique producer in Dealu Mare, not one of the five largest industrial-scale producers (Cramele Recaș, Jidvei, Cotnari, Crama Ceptura, Zarea) that dominate the domestic market." },
+                        { q: "Which producer, located in Dobrogea, is a leader in certified organic and biodynamic viticulture?", a: ["Domeniul Bogdan", "Cramele Recaș", "Jidvei", "SERVE"], subjectType: 'producer', subjectName: 'Domeniul Bogdan', explanation: "Domeniul Bogdan in the Dobrogea region is a leader in the trend towards sustainable practices, being a notable producer of certified organic and biodynamic wines." },
+                        { q: "What was the primary focus of the state-run agricultural enterprises (IAS) during the communist era?", a: ["Quantity over quality", "Quality over quantity", "Exporting to Western Europe", "Producing only sparkling wine"], explanation: "Under the communist model, the focus of the state-run enterprises (IAS) shifted entirely from quality to quantity, to satisfy bulk demand from other communist bloc countries." },
+                        { q: "Which winery is associated with Australian winemaker Hartley Smithers?", a: ["Cramele Recaș", "Jidvei", "AVINCIS", "SERVE"], subjectType: 'producer', subjectName: 'Cramele Recaș', explanation: "Cramele Recaș is led by co-owner and winemaker Hartley Smithers, who also has experience with Australia's massive Yellowtail brand, bringing a commercially savvy approach." },
+                        { q: "Which producer is NOT located in the Dealu Mare DOC?", a: ["AVINCIS", "SERVE", "Davino", "Lacerta"], subjectType: 'producer', subjectName: 'AVINCIS', explanation: "AVINCIS is the benchmark producer of the Drăgășani DOC. SERVE, Davino, and Lacerta are all key producers located in the Dealu Mare DOC." },
+                        { q: "The privatization of massive, consolidated state wineries after 1989 inadvertently helped producers like Recaș and Jidvei do what after 2007?", a: ["Quickly absorb EU funds to modernize and scale up quality production", "Focus exclusively on the domestic market", "Return all land to small growers", "Switch entirely to hybrid grapes"], explanation: "When privatized, the massive scale of former state wineries allowed new owners like Recaș and Jidvei to effectively leverage the substantial EU funding available after 2007 to modernize and scale up rapidly." },
+                        { q: "Which of these is a key challenge stemming from Romania's strong domestic market?", a: ["It can reduce the incentive to compete in demanding export markets", "It drives prices too high for locals", "It forces wineries to export everything", "It only demands dry red wines"], explanation: "The strong domestic market, while profitable, can reduce the incentive for wineries to tackle the more competitive and demanding export markets." },
+                        { q: "Which producer is known for its historic royal connection, having been established as a royal domain in 1884?", a: ["Domeniul Coroanei Segarcea", "Domeniile Sâmburești", "Casa de Vinuri Cotnari", "Jidvei"], subjectType: 'producer', subjectName: 'Domeniul Coroanei Segarcea', explanation: "Domeniul Coroanei Segarcea was established as one of twelve royal domains in 1884, and its name translates to 'The Crown's Domain of Segarcea'." },
+                        { q: "What is a key emerging trend among Romania's new wave of producers?", a: ["A focus on single-vineyard, terroir-driven wines", "A return to high-yield, generic blends", "Creating sweeter styles for the domestic market", "Using only concrete tanks for fermentation"], explanation: "There is a clear shift away from generic, international-style wines towards single-vineyard, terroir-driven expressions that reflect a specific plot of land. This is a hallmark of a maturing fine wine industry." },
+                        { q: "Which producer is NOT located in the Mehedinți DOC?", a: ["Domeniile Sâmburești", "Corcova Roy & Dâmboviceanu", "Vinarte (Castel Stârmina)", "Crama Oprișor"], subjectType: 'producer', subjectName: 'Domeniile Sâmburești', explanation: "Domeniile Sâmburești is the primary producer of the Sâmburești DOC. Corcova, Vinarte, and Crama Oprișor are all key producers in the Mehedinți DOC." },
+                        { q: "What is the primary recommendation for sommeliers regarding Romanian wine?", a: ["Use the story of its dramatic rebirth and focus on regional diversity and food pairings", "Only sell the cheapest available options", "Avoid indigenous grapes as they are unknown", "Focus only on Merlot and Chardonnay"], explanation: "For sommeliers, a key recommendation is to use the powerful narrative of Romania's rebirth, create tasting flights showcasing regional diversity, and develop authentic food pairings to engage customers." },
+                        { q: "Which winery has Austrian ties and is part of the 'new wave' in Transylvania?", a: ["Liliac", "Jidvei", "Lechburg", "Villa Vinea"], subjectType: 'producer', subjectName: 'Liliac', explanation: "Liliac, a 'new wave' Transylvanian producer, has Austrian investment and expertise and is focused on crafting premium, terroir-driven wines." },
+                        { q: "What is a significant difference between domestic Romanian taste preferences and those of key export markets?", a: ["Domestic tastes have historically leaned towards semi-sweet and heavily oaked styles", "Domestic tastes prefer light, acidic white wines exclusively", "Export markets only want sweet red wines", "There is no significant difference"], explanation: "Domestic taste preferences, which historically have leaned towards semi-sweet and heavily oaked styles, can differ significantly from the preferences of key export markets that often favor drier, fresher wines." },
+                        { q: "Which of these is NOT one of the pioneering foreign investors of the 1990s?", a: ["Aurelia Vișinescu", "Philip Cox", "Count Guy de Poix", "Sergio Faleschini"], explanation: "Aurelia Vișinescu is a highly respected native Romanian winemaker. Philip Cox (British), Count Guy de Poix (French), and Sergio Faleschini (Italian) were key foreign pioneers." },
+                        { q: "What is the main focus of the 'Rise of the Artisan Producer' trend?", a: ["Exploring specific terroirs and low-intervention winemaking", "Mass production for supermarkets", "Creating high-alcohol fortified wines", "Replanting with hybrid grapes"], explanation: "The burgeoning movement of small, artisanal producers is focused on exploring specific terroirs, experimenting with low-intervention winemaking, and pushing the boundaries of quality." },
+                        { q: "Which producer is NOT located in the Crișana and Maramureș region?", a: ["AVINCIS", "Balla Géza", "Carastelec", "Darabont Family"], subjectType: 'producer', subjectName: 'AVINCIS', explanation: "AVINCIS is the benchmark producer of the Drăgășani DOC in Oltenia. Balla Géza, Carastelec, and the Darabont Family are all key producers in the Crișana and Maramureș region." },
+                        { q: "What is a key recommendation for importers looking at the Romanian market?", a: ["Focus on producers championing indigenous varieties", "Only import bulk wine", "Avoid red wines completely", "Focus only on the most expensive wines"], explanation: "For importers, the greatest opportunity lies with producers who are championing indigenous varieties, as this is Romania's unique selling proposition." },
+                        { q: "Which winery is NOT located in the Banat region?", a: ["Domeniul Bogdan", "Cramele Recaș", "Both A and B", "Neither A nor B"], subjectType: 'producer', subjectName: 'Domeniul Bogdan', explanation: "Cramele Recaș is the dominant producer in the Banat region. Domeniul Bogdan is located in Dobrogea and is a leader in organic viticulture." },
+                        { q: "The process of de-collectivization after 1989 created what initial problem for the wine industry?", a: ["A highly fragmented landscape of small, under-capitalized plots", "An immediate surplus of high-quality wine", "A lack of vineyard land", "The destruction of all wineries"], explanation: "The just process of returning land to its original owners created a highly fragmented landscape of small, under-capitalized plots, which initially delayed the large-scale investment needed for modernization." },
+                        { q: "Which of these is NOT a major opportunity for the Romanian wine industry?", a: ["Maintaining the communist-era reputation", "Indigenous grapes as a USP", "Exceptional value proposition", "Wine tourism potential"], explanation: "Overcoming the outdated communist-era reputation is a major challenge, not an opportunity. The key opportunities are its indigenous grapes, value, and tourism potential." },
+                        { q: "Which winery is known for its powerful red blends historically nicknamed 'Sâmburești Bordeaux'?", a: ["Domeniile Sâmburești", "Cramele Recaș", "Jidvei", "Cotnari"], subjectType: 'producer', subjectName: 'Domeniile Sâmburești', explanation: "The Sâmburești region, and its primary producer Domeniile Sâmburești, is famous for its powerful red blends, historically nicknamed 'Sâmburești Bordeaux'." },
+                        { q: "Which winery is NOT located in the Moldova region?", a: ["Liliac", "Casa de Vinuri Cotnari", "Domeniile Averești", "Both B and C"], subjectType: 'producer', subjectName: 'Liliac', explanation: "Liliac is a 'new wave' producer in Transylvania. Casa de Vinuri Cotnari and Domeniile Averești are key producers in the Moldova region." },
+                        { q: "What was the result of the communist policy of mass production on grape varieties?", a: ["Thousands of hectares of indigenous varieties were replaced with high-yielding hybrids", "Only noble French varieties were planted", "All vineyards were converted to table grapes", "Genetic diversity was increased"], explanation: "The communist policy of mass production led to thousands of hectares of traditional, quality-focused indigenous varieties being grubbed up and replaced with high-yielding, but often flavorless, hybrids." },
+                        { q: "Which producer is a notable for its certified organic wines in Transylvania?", a: ["Lechburg", "Liliac", "Jidvei", "Villa Vinea"], subjectType: 'producer', subjectName: 'Lechburg', explanation: "Lechburg is a notable producer of certified organic wines in Transylvania, representing the new wave of quality- and sustainability-focused wineries." },
+                        { q: "What is the primary product of the Jidvei winery?", a: ["Dry white wines and traditional method sparkling wines", "Sweet red wines", "Bulk rosé wine", "Fortified wines"], subjectType: 'producer', subjectName: 'Jidvei', explanation: "Jidvei, a titan of the industry located in Transylvania, is a leader in the production of dry white wines and traditional method sparkling wines." },
+                        { q: "Which of these is NOT a key viticultural center within the Dealu Mare DOC?", a: ["Sâmburești", "Valea Călugărească", "Pietroasele", "Ceptura"], subjectType: 'place', subjectName: 'Sâmburești', explanation: "Sâmburești is its own distinct DOC. Valea Călugărească, Pietroasele, and Ceptura are all important viticultural centers within the Dealu Mare DOC." },
+                        { q: "What was the main catalyst for the nationwide quality revolution in Romanian wine?", a: ["Accession to the European Union in 2007", "The fall of Communism in 1989", "The phylloxera epidemic", "The arrival of foreign critics"], explanation: "While the fall of Communism started the process, the true catalyst for the nationwide quality revolution was Romania's accession to the EU in 2007 and the subsequent influx of funds for modernization." },
+                        { q: "Which producer is NOT primarily known for red wine?", a: ["Jidvei", "SERVE", "Davino", "Domeniile Sâmburești"], subjectType: 'producer', subjectName: 'Jidvei', explanation: "Jidvei, located in cool-climate Transylvania, is a specialist in white and sparkling wines. SERVE, Davino, and Domeniile Sâmburești are all benchmark producers of red wines in the warmer southern regions." },
+                        { q: "What is a key part of the business model for Cramele Recaș?", a: ["Producing clean, well-made, commercially savvy wines that offer excellent value", "Focusing only on rare, expensive indigenous grapes", "Selling exclusively to the domestic market", "Using only traditional, pre-communist era equipment"], subjectType: 'producer', subjectName: 'Cramele Recaș', explanation: "Cramele Recaș is known for producing a vast portfolio of clean, well-made, and commercially savvy wines that offer excellent value, which has made them a major international success." },
+                        { q: "Which of these is a key initiative promoting wine tourism in Romania?", a: ["CrameRomania.ro / Revino.ro", "ONIV", "PNVV", "IAS"], subjectType: 'place', subjectName: 'Wine Tourism in Romania', explanation: "Initiatives like CrameRomania.ro and Revino.ro are key players in promoting wine tourism by providing bilingual databases and information on wineries and tours." },
+                        { q: "Which producer is located in the southernmost part of the country, in the Mehedinți DOC?", a: ["Crama Oprișor", "Domeniile Averești", "Balla Géza", "Liliac"], subjectType: 'producer', subjectName: 'Crama Oprișor', explanation: "Crama Oprișor is one of the key producers in the Mehedinți DOC, located in the far southwest of Oltenia." }
+                    ]
+                },
+                flashcard: {
+                    title: "Flashcard Study",
+                    instructions: "First, select the topics you want to study. A deck will be created from all the key terms and concepts in those categories. Click the card to flip it and use the buttons to navigate.",
+                    // Flashcard content will be generated from all other modules
+                }
+            }
+        };
+
+        // --- APPLICATION LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // State
+            let currentModule = null;
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let questions = [];
+            let currentHistorianQuestionIndex = 0;
+            let playerTimelineOrder = [];
+            let flashcardDeck = [];
+            let currentFlashcardIndex = 0;
+            let apiKey = ''; // Intentionally left blank
+
+            // DOM Elements
+            const screens = {
+                mainMenu: document.getElementById('main-menu'),
+                quiz: document.getElementById('quiz-screen'),
+                historian: document.getElementById('historian-screen'),
+                flashcard: document.getElementById('flashcard-screen'),
+            };
+            const modalContainer = document.getElementById('modal-container');
+            const modalContent = document.getElementById('modal-content');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const aiSettingsBtn = document.getElementById('ai-settings-btn');
+            
+            const quizTitle = document.getElementById('quiz-title');
+            const quizBackToMenuBtn = document.getElementById('quiz-back-to-menu');
+            const questionText = document.getElementById('question-text');
+            const answerOptions = document.getElementById('answer-options');
+            const nextQuestionBtn = document.getElementById('next-question-btn');
+            const progressBarInner = document.getElementById('progress-bar-inner');
+            const explanationPanel = document.getElementById('explanation-panel');
+            const aiActionBtn = document.getElementById('ai-action-btn');
+
+            const historianBackToMenuBtn = document.getElementById('historian-back-to-menu');
+            const historianProgressBarInner = document.getElementById('historian-progress-bar-inner');
+            const historianQuestionText = document.getElementById('historian-question-text');
+            const eventPool = document.getElementById('event-pool');
+            const playerTimeline = document.getElementById('player-timeline');
+            const submitTimelineBtn = document.getElementById('submit-timeline-btn');
+            const timelineFeedback = document.getElementById('timeline-feedback');
+            const historianContinueBtn = document.getElementById('historian-continue-btn');
+            
+            const flashcardTopicModal = document.getElementById('flashcard-topic-modal');
+            const topicCheckboxesContainer = document.getElementById('topic-checkboxes');
+            const startFlashcardSessionBtn = document.getElementById('start-flashcard-session-btn');
+            const flashcardModalCloseBtn = document.getElementById('flashcard-modal-close-btn');
+            const flashcardContainer = document.getElementById('flashcard');
+            const flashcardFront = document.getElementById('flashcard-front');
+            const flashcardBack = document.getElementById('flashcard-back');
+            const flashcardProgress = document.getElementById('flashcard-progress');
+            const prevFlashcardBtn = document.getElementById('prev-flashcard-btn');
+            const nextFlashcardBtn = document.getElementById('next-flashcard-btn');
+            const flashcardBackToMenuBtn = document.getElementById('flashcard-back-to-menu');
+
+
+            // --- Utility Functions ---
+            const showScreen = (screenName) => {
+                Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+                if (screens[screenName]) {
+                    screens[screenName].classList.remove('hidden');
+                }
+            };
+
+            const showModal = (title, body, showClose = true) => {
+                modalTitle.innerHTML = title;
+                modalBody.innerHTML = body;
+                modalCloseBtn.style.display = showClose ? 'block' : 'none';
+                modalContainer.classList.remove('invisible', 'opacity-0');
+                modalContent.classList.remove('scale-95');
+            };
+
+            const hideModal = () => {
+                modalContainer.classList.add('opacity-0');
+                modalContent.classList.add('scale-95');
+                setTimeout(() => {
+                    modalContainer.classList.add('invisible');
+                    // Clear AI content when modal closes
+                    if(modalTitle.innerText.startsWith("AI")) {
+                       modalBody.innerHTML = '';
+                    }
+                }, 300);
+            };
+
+            const shuffleArray = (array) => {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            };
+            
+            // --- AI & Settings ---
+            const showAiSettingsModal = () => {
+                const body = `
+                    <p class="mb-4">To use the AI-powered features, please enter your Google AI Studio API key. Your key is stored only for this session and is not shared.</p>
+                    <input type="password" id="api-key-input" class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Enter your API key">
+                    <p class="text-xs mt-2 text-gray-400">You can get a key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-purple-400 hover:underline">Google AI Studio</a>. Treat your key like a password and keep it secure.</p>
+                    <button id="save-api-key" class="mt-4 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded w-full">Save Key</button>
+                `;
+                showModal('⚙️ AI Settings', body);
+                
+                document.getElementById('save-api-key').addEventListener('click', () => {
+                    const input = document.getElementById('api-key-input');
+                    apiKey = input.value.trim();
+                    if (apiKey) {
+                        alert('API Key saved for this session.');
+                        hideModal();
+                    } else {
+                        alert('Please enter a valid API key.');
+                    }
+                });
+            };
+
+            const callGeminiAPI = async (prompt) => {
+                if (!apiKey) {
+                    showModal('API Key Required', 'Please set your Google AI API key in the "AI Settings" on the main menu to use this feature.');
+                    return;
+                }
+
+                showModal('🤖 Generating AI Response...', '<div class="flex justify-center items-center"><div class="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-400"></div></div>', false);
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }]
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error.message || `API request failed with status ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const text = data.candidates[0].content.parts[0].text;
+                    showModal('🤖 AI-Powered Insight', text.replace(/\n/g, '<br>'));
+                } catch (error) {
+                    console.error('Gemini API Error:', error);
+                    showModal('Error', `Could not fetch response from AI. Please check your API key and network connection. <br><br><small class="text-gray-400">Error: ${error.message}</small>`);
+                }
+            };
+            
+            const handleAiAction = (subjectType, subjectName) => {
+                let prompt = '';
+                const region = gameData.regionName;
+
+                switch (subjectType) {
+                    case 'grape':
+                        prompt = `You are a master ampelographer and wine educator with a specialization in ${region}. Your task is to profile the grape: ${subjectName}. Your response must follow this strict pyramid of importance: 1. The grape's specific expression and role within ${region}. 2. Its general viticultural characteristics as they manifest in ${region}'s climate. 3. Its history within the region. Your entire response must be framed through the lens of ${region}. Synthesize information from authoritative sources, but always prioritize the context of ${region}. Structure your response with the following sections:<h3>Overview and History in ${region}</h3>, <h3>Viticultural Characteristics in ${region}</h3>, and <h3>Typical ${region} Wine Profile</h3>. Format the output in simple HTML using <p> tags for paragraphs.`;
+                        break;
+                    case 'producer':
+                    case 'wine':
+                    case 'place':
+                         prompt = `You are a world-renowned wine critic specializing exclusively in the wines of ${region}. Your task is to write a professional profile for the following iconic ${region} topic: ${subjectName}. Your analysis must adhere to a strict pyramid of importance: 1) The specific subject's style or character. 2) The character of its specific appellation within ${region}. 3) The general characteristics of ${region}. Do not mention wines from other regions unless making a direct, essential stylistic comparison. Synthesize information from authoritative sources like Vinous, The Wine Advocate, and JancisRobinson.com, but ensure the final note is your own expert synthesis. Format in simple HTML using <h3> for a title and <p> for the body.`;
+                        break;
+                    case 'dish':
+                    case 'wine_pairing':
+                        prompt = `You are a master sommelier and food theorist specializing in the cuisine and wine of ${region}. Your task is to explain the classic wine pairing for: ${subjectName}. Your explanation must follow this strict pyramid of importance: 1. The specific characteristics of the dish as found in the region. 2. The typical profile of a ${region} wine that pairs with it. 3. The underlying gastronomic principles (complement, contrast, texture) that make the pairing successful within the context of ${region}'s culture. Synthesize information from expert sources, but frame your entire response within the context of ${region}. Format in simple HTML using <h3> for a title and <p> for paragraphs.`;
+                        break;
+                    case 'ingredient':
+                         prompt = `You are a food and wine expert specializing in the cuisine of ${region}. Your task is to provide a detailed overview of the ingredient: ${subjectName}. Your response must follow this strict pyramid of importance: 1. How this ingredient is used in the local cuisine of ${region}. 2. Its typical flavor and aromatic profile. 3. How its profile might be reflected in or complement the local wines, but do not focus on specific pairings unless it is intrinsic to the ingredient itself. Synthesize from authoritative sources. Format in simple HTML using <h3> for a title and <p> for paragraphs.`;
+                        break;
+                }
+                
+                if (prompt) {
+                    callGeminiAPI(prompt);
+                }
+            };
+
+            // --- Game Flow ---
+            const startGame = (moduleId) => {
+                currentModule = gameData.modules[moduleId];
+                currentQuestionIndex = 0;
+                score = 0;
+                
+                showModal(currentModule.title, currentModule.instructions);
+                
+                modalCloseBtn.onclick = () => {
+                    hideModal();
+                    if (moduleId === 'historian') {
+                        currentHistorianQuestionIndex = 0;
+                        setupHistorianGame();
+                    } else if (moduleId === 'flashcard') {
+                        setupFlashcardGame();
+                    } else {
+                        questions = shuffleArray([...currentModule.questions]).slice(0, 10);
+                        setupQuizGame();
+                    }
+                };
+            };
+            
+            const setupQuizGame = () => {
+                showScreen('quiz');
+                quizTitle.innerText = currentModule.title;
+                displayQuestion();
+            };
+            
+            const displayQuestion = () => {
+                const question = questions[currentQuestionIndex];
+                questionText.innerText = question.q;
+                answerOptions.innerHTML = '';
+                
+                const shuffledAnswers = shuffleArray([...question.a]);
+                shuffledAnswers.forEach(option => {
+                    const button = document.createElement('button');
+                    button.innerText = option;
+                    button.classList.add('w-full', 'p-4', 'bg-gray-700', 'rounded', 'hover:bg-purple-700', 'transition-colors', 'text-left');
+                    button.onclick = () => checkAnswer(option, question);
+                    answerOptions.appendChild(button);
+                });
+                
+                nextQuestionBtn.classList.add('hidden');
+                explanationPanel.classList.add('hidden');
+                aiActionBtn.classList.add('hidden');
+                progressBarInner.style.width = `${((currentQuestionIndex) / questions.length) * 100}%`;
+            };
+
+            const checkAnswer = (selectedOption, question) => {
+                const isCorrect = selectedOption === question.a[0];
+                if (isCorrect) {
+                    score++;
+                }
+
+                Array.from(answerOptions.children).forEach(button => {
+                    button.disabled = true;
+                    if (button.innerText === question.a[0]) {
+                        button.classList.remove('bg-gray-700', 'hover:bg-purple-700');
+                        button.classList.add('bg-green-600');
+                    } else if (button.innerText === selectedOption) {
+                        button.classList.remove('bg-gray-700', 'hover:bg-purple-700');
+                        button.classList.add('bg-red-600');
+                    }
+                });
+
+                if (question.explanation) {
+                    explanationPanel.innerHTML = `<strong>Explanation:</strong> ${question.explanation}`;
+                    explanationPanel.classList.remove('hidden');
+                }
+
+                if (isCorrect && question.subjectType && question.subjectName) {
+                    aiActionBtn.innerText = `➡️ Dive Deeper into ${question.subjectName}`;
+                    aiActionBtn.classList.remove('hidden');
+                    aiActionBtn.onclick = () => handleAiAction(question.subjectType, question.subjectName);
+                } else if (!isCorrect && question.subjectType && question.subjectName) {
+                    aiActionBtn.innerText = `💡 Learn More about ${question.subjectName}`;
+                    aiActionBtn.classList.remove('hidden');
+                    aiActionBtn.onclick = () => handleAiAction(question.subjectType, question.subjectName);
+                }
+
+                nextQuestionBtn.classList.remove('hidden');
+            };
+
+            const handleNextQuestion = () => {
+                currentQuestionIndex++;
+                progressBarInner.style.width = `${((currentQuestionIndex) / questions.length) * 100}%`;
+                if (currentQuestionIndex < questions.length) {
+                    displayQuestion();
+                } else {
+                    endGame();
+                }
+            };
+            
+            const endGame = () => {
+                const finalScore = (score / questions.length) * 100;
+                showModal(
+                    'Module Complete!',
+                    `You scored ${score} out of ${questions.length} (${finalScore.toFixed(0)}%).<br><br>Play again to get a new set of questions and improve your knowledge!`
+                );
+                modalCloseBtn.onclick = () => {
+                    hideModal();
+                    showScreen('mainMenu');
+                };
+            };
+
+            // --- Historian Module Logic ---
+            const setupHistorianGame = () => {
+                const historianQuestions = gameData.modules.historian.questions;
+                if (currentHistorianQuestionIndex >= historianQuestions.length) {
+                    showModal('Module Complete!', 'You have completed all the timelines!');
+                    modalCloseBtn.onclick = () => {
+                        hideModal();
+                        showScreen('mainMenu');
+                    };
+                    return;
+                }
+
+                const historianQuestion = historianQuestions[currentHistorianQuestionIndex];
+                playerTimelineOrder = [];
+                showScreen('historian');
+                historianQuestionText.innerText = historianQuestion.prompt;
+                timelineFeedback.classList.add('hidden');
+                historianContinueBtn.classList.add('hidden');
+                submitTimelineBtn.classList.remove('hidden');
+                historianProgressBarInner.style.width = `${(currentHistorianQuestionIndex / historianQuestions.length) * 100}%`;
+                
+                renderEventPool(historianQuestion);
+                renderPlayerTimeline();
+            };
+
+            const renderEventPool = (historianQuestion) => {
+                eventPool.innerHTML = '';
+                const availableEvents = historianQuestion.events.filter(event => !playerTimelineOrder.includes(event));
+                shuffleArray(availableEvents).forEach(event => {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.innerText = event.text;
+                    eventDiv.classList.add('p-3', 'bg-gray-700', 'rounded', 'cursor-pointer', 'hover:bg-purple-700');
+                    eventDiv.onclick = () => {
+                        playerTimelineOrder.push(event);
+                        renderEventPool(historianQuestion);
+                        renderPlayerTimeline();
+                    };
+                    eventPool.appendChild(eventDiv);
+                });
+            };
+
+            const renderPlayerTimeline = () => {
+                playerTimeline.innerHTML = '';
+                playerTimelineOrder.forEach((event, index) => {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.innerText = `${index + 1}. ${event.text}`;
+                    eventDiv.classList.add('p-3', 'bg-gray-600', 'rounded', 'cursor-pointer', 'hover:bg-red-500');
+                    eventDiv.onclick = () => {
+                        playerTimelineOrder.splice(index, 1);
+                        renderEventPool(gameData.modules.historian.questions[currentHistorianQuestionIndex]);
+                        renderPlayerTimeline();
+                    };
+                    playerTimeline.appendChild(eventDiv);
+                });
+            };
+            
+            const checkTimeline = () => {
+                const historianQuestion = gameData.modules.historian.questions[currentHistorianQuestionIndex];
+                const correctOrder = [...historianQuestion.events].sort((a, b) => {
+                    const yearA = parseInt(a.year.match(/\d+/)[0]);
+                    const yearB = parseInt(b.year.match(/\d+/)[0]);
+                    return yearA - yearB;
+                });
+                
+                let feedbackHtml = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><h4 class="font-bold text-lg mb-2 text-center">Your Submission</h4>`;
+                
+                playerTimelineOrder.forEach((playerEvent, index) => {
+                    const isCorrect = playerEvent.text === correctOrder[index].text;
+                    feedbackHtml += `<div class="p-3 bg-gray-800 rounded mb-2 ${isCorrect ? 'timeline-item correct' : 'timeline-item incorrect'}">${playerEvent.year}: ${playerEvent.text}</div>`;
+                });
+                
+                feedbackHtml += `</div><div><h4 class="font-bold text-lg mb-2 text-center">Correct Timeline</h4>`;
+                
+                correctOrder.forEach(correctEvent => {
+                    feedbackHtml += `<div class="p-3 bg-gray-800 rounded mb-2 timeline-item correct">${correctEvent.year}: ${correctEvent.text}</div>`;
+                });
+
+                feedbackHtml += `</div></div>`;
+                timelineFeedback.innerHTML = feedbackHtml;
+                timelineFeedback.classList.remove('hidden');
+                submitTimelineBtn.classList.add('hidden');
+                historianContinueBtn.classList.remove('hidden');
+            };
+
+            const handleNextTimeline = () => {
+                currentHistorianQuestionIndex++;
+                setupHistorianGame();
+            };
+            
+            // --- Flashcard Module Logic ---
+            const setupFlashcardGame = () => {
+                topicCheckboxesContainer.innerHTML = '';
+                const topics = ['History', 'Terroir', 'Ampelographer', 'Law', 'Gastronomy', 'Critic'];
+                
+                const allOption = `
+                    <label class="flex items-center space-x-3 p-2 rounded hover:bg-gray-700">
+                        <input type="checkbox" id="select-all-topics" class="form-checkbox h-5 w-5 text-purple-600 bg-gray-900 border-gray-500 rounded focus:ring-purple-500">
+                        <span class="font-bold">Select All</span>
+                    </label>
+                `;
+                topicCheckboxesContainer.innerHTML += allOption;
+
+                topics.forEach(topic => {
+                    const checkboxHtml = `
+                        <label class="flex items-center space-x-3 p-2 rounded hover:bg-gray-700">
+                            <input type="checkbox" name="topic" value="${topic.toLowerCase()}" class="form-checkbox h-5 w-5 text-purple-600 bg-gray-900 border-gray-500 rounded focus:ring-purple-500">
+                            <span>${topic}</span>
+                        </label>
+                    `;
+                    topicCheckboxesContainer.innerHTML += checkboxHtml;
+                });
+                
+                flashcardTopicModal.classList.remove('hidden');
+
+                document.getElementById('select-all-topics').onchange = (e) => {
+                    document.querySelectorAll('input[name="topic"]').forEach(checkbox => {
+                        checkbox.checked = e.target.checked;
+                    });
+                };
+            };
+            
+            const buildAndStartFlashcards = () => {
+                const selectedTopics = Array.from(document.querySelectorAll('input[name="topic"]:checked')).map(cb => cb.value);
+                if (selectedTopics.length === 0) {
+                    alert("Please select at least one topic.");
+                    return;
+                }
+                
+                flashcardDeck = [];
+                selectedTopics.forEach(topicKey => {
+                    if (topicKey === 'history') {
+                        flashcardDeck.push(...gameData.historyFlashcards);
+                    } else {
+                        const module = gameData.modules[topicKey];
+                        if (module && module.questions) {
+                            module.questions.forEach(q => {
+                                flashcardDeck.push({ front: q.q, back: q.a[0] });
+                            });
+                        }
+                    }
+                });
+                
+                flashcardDeck = shuffleArray(flashcardDeck);
+                currentFlashcardIndex = 0;
+                flashcardTopicModal.classList.add('hidden');
+                
+                if(flashcardDeck.length > 0) {
+                    showScreen('flashcard');
+                    displayFlashcard();
+                } else {
+                    alert("No flashcards available for the selected topics.");
+                    showScreen('mainMenu');
+                }
+            };
+
+            const displayFlashcard = () => {
+                if (flashcardDeck.length === 0) return;
+                
+                flashcardContainer.classList.remove('is-flipped');
+                
+                setTimeout(() => {
+                    const card = flashcardDeck[currentFlashcardIndex];
+                    flashcardFront.innerHTML = `<p class="text-2xl">${card.front}</p>`;
+                    flashcardBack.innerHTML = `<p class="text-2xl font-bold">${card.back}</p>`;
+                    flashcardProgress.innerText = `Card ${currentFlashcardIndex + 1} of ${flashcardDeck.length}`;
+                }, 300); // Wait for flip back animation
+            };
+
+            // --- Event Listeners ---
+            document.querySelectorAll('.module-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    startGame(btn.dataset.module);
+                });
+            });
+
+            modalCloseBtn.addEventListener('click', hideModal);
+            aiSettingsBtn.addEventListener('click', showAiSettingsModal);
+            nextQuestionBtn.addEventListener('click', handleNextQuestion);
+            submitTimelineBtn.addEventListener('click', checkTimeline);
+            historianContinueBtn.addEventListener('click', handleNextTimeline);
+            
+            quizBackToMenuBtn.addEventListener('click', () => showScreen('mainMenu'));
+            historianBackToMenuBtn.addEventListener('click', () => showScreen('mainMenu'));
+            
+            flashcardContainer.addEventListener('click', () => {
+                flashcardContainer.classList.toggle('is-flipped');
+            });
+
+            prevFlashcardBtn.addEventListener('click', () => {
+                if (currentFlashcardIndex > 0) {
+                    currentFlashcardIndex--;
+                    displayFlashcard();
+                }
+            });
+
+            nextFlashcardBtn.addEventListener('click', () => {
+                if (currentFlashcardIndex < flashcardDeck.length - 1) {
+                    currentFlashcardIndex++;
+                    displayFlashcard();
+                }
+            });
+
+            flashcardModalCloseBtn.addEventListener('click', () => {
+                 flashcardTopicModal.classList.add('hidden');
+            });
+            startFlashcardSessionBtn.addEventListener('click', buildAndStartFlashcards);
+            flashcardBackToMenuBtn.addEventListener('click', () => showScreen('mainMenu'));
+
+            // Initial Load
+            showModal(
+                'Welcome to the Romania Wine Challenge!',
+                'This is an interactive study tool designed for advanced wine students. Test your knowledge across multiple modules, study with flashcards, and use the AI features to deepen your understanding. Good luck!',
+                true
+            );
+            modalCloseBtn.onclick = hideModal;
+        });
+    </script>
+</body>
+</html>
