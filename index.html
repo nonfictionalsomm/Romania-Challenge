@@ -105,6 +105,7 @@
                 <div id="explanation-panel" class="hidden bg-gray-700 p-4 rounded-lg text-sm"></div>
                 <button id="ai-action-btn" class="hidden mt-2 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded"></button>
             </div>
+            <div id="ai-response-container" class="hidden mt-4 bg-gray-800 border border-purple-500 p-4 rounded-lg max-h-96 overflow-y-auto"></div>
             <button id="next-question-btn" class="hidden mt-6 w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded">Next Question</button>
         </div>
         
@@ -120,7 +121,7 @@
             <div id="historian-question-container" class="bg-gray-800 p-6 rounded-lg shadow-lg mb-4">
                  <p id="historian-question-text" class="text-xl mb-4 text-center"></p>
             </div>
-            <div class="flex flex-col md:flex-row gap-6">
+            <div id="historian-input-container" class="flex flex-col md:flex-row gap-6">
                 <div class="w-full md:w-1/2">
                     <h3 class="font-bold text-lg mb-2 text-center">Available Events</h3>
                     <div id="event-pool" class="bg-gray-800 p-4 rounded-lg min-h-[200px] space-y-2">
@@ -580,10 +581,12 @@
             const progressBarInner = document.getElementById('progress-bar-inner');
             const explanationPanel = document.getElementById('explanation-panel');
             const aiActionBtn = document.getElementById('ai-action-btn');
+            const aiResponseContainer = document.getElementById('ai-response-container');
 
             const historianBackToMenuBtn = document.getElementById('historian-back-to-menu');
             const historianProgressBarInner = document.getElementById('historian-progress-bar-inner');
             const historianQuestionText = document.getElementById('historian-question-text');
+            const historianInputContainer = document.getElementById('historian-input-container');
             const eventPool = document.getElementById('event-pool');
             const playerTimeline = document.getElementById('player-timeline');
             const submitTimelineBtn = document.getElementById('submit-timeline-btn');
@@ -624,10 +627,6 @@
                 modalContent.classList.add('scale-95');
                 setTimeout(() => {
                     modalContainer.classList.add('invisible');
-                    // Clear AI content when modal closes
-                    if(modalTitle.innerText.startsWith("AI")) {
-                       modalBody.innerHTML = '';
-                    }
                 }, 300);
             };
 
@@ -667,7 +666,10 @@
                     return;
                 }
 
-                showModal('🤖 Generating AI Response...', '<div class="flex justify-center items-center"><div class="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-400"></div></div>', false);
+                aiActionBtn.disabled = true;
+                aiActionBtn.innerText = '🤖 Generating...';
+                aiResponseContainer.classList.add('hidden');
+                aiResponseContainer.innerHTML = '';
 
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                 
@@ -689,14 +691,27 @@
 
                     const data = await response.json();
                     const text = data.candidates[0].content.parts[0].text;
-                    showModal('🤖 AI-Powered Insight', text.replace(/\n/g, '<br>'));
+                    
+                    // Clean the response text from markdown code blocks
+                    const cleanedText = text.replace(/^```html\s*|```\s*$/g, '').trim();
+
+                    aiResponseContainer.innerHTML = cleanedText;
+                    aiResponseContainer.classList.remove('hidden');
+
                 } catch (error) {
                     console.error('Gemini API Error:', error);
-                    showModal('Error', `Could not fetch response from AI. Please check your API key and network connection. <br><br><small class="text-gray-400">Error: ${error.message}</small>`);
+                    aiResponseContainer.innerHTML = `<p class="text-red-400">Could not fetch response from AI. Please check your API key and network connection. <br><br><small>Error: ${error.message}</small></p>`;
+                    aiResponseContainer.classList.remove('hidden');
+                } finally {
+                    aiActionBtn.disabled = false;
+                    aiActionBtn.innerText = `➡️ Dive Deeper into ${currentSubjectName}`; // Reset button text
                 }
             };
             
+            let currentSubjectName = ''; // To hold the subject for the AI button text reset
+
             const handleAiAction = (subjectType, subjectName) => {
+                currentSubjectName = subjectName;
                 let prompt = '';
                 const region = gameData.regionName;
 
@@ -768,6 +783,8 @@
                 nextQuestionBtn.classList.add('hidden');
                 explanationPanel.classList.add('hidden');
                 aiActionBtn.classList.add('hidden');
+                aiResponseContainer.classList.add('hidden');
+                aiResponseContainer.innerHTML = '';
                 progressBarInner.style.width = `${((currentQuestionIndex) / questions.length) * 100}%`;
             };
 
@@ -843,6 +860,7 @@
                 const historianQuestion = historianQuestions[currentHistorianQuestionIndex];
                 playerTimelineOrder = [];
                 showScreen('historian');
+                historianInputContainer.classList.remove('hidden');
                 historianQuestionText.innerText = historianQuestion.prompt;
                 timelineFeedback.classList.add('hidden');
                 historianContinueBtn.classList.add('hidden');
@@ -887,11 +905,14 @@
             const checkTimeline = () => {
                 const historianQuestion = gameData.modules.historian.questions[currentHistorianQuestionIndex];
                 const correctOrder = [...historianQuestion.events].sort((a, b) => {
-                    const yearA = parseInt(a.year.match(/\d+/)[0]);
-                    const yearB = parseInt(b.year.match(/\d+/)[0]);
+                    // This handles years like "600-500 BC" by taking the first number
+                    const yearA = parseInt(a.year.match(/-?\d+/)[0]);
+                    const yearB = parseInt(b.year.match(/-?\d+/)[0]);
                     return yearA - yearB;
                 });
                 
+                historianInputContainer.classList.add('hidden');
+
                 let feedbackHtml = `
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div><h4 class="font-bold text-lg mb-2 text-center">Your Submission</h4>`;
@@ -1011,7 +1032,11 @@
             submitTimelineBtn.addEventListener('click', checkTimeline);
             historianContinueBtn.addEventListener('click', handleNextTimeline);
             
-            quizBackToMenuBtn.addEventListener('click', () => showScreen('mainMenu'));
+            quizBackToMenuBtn.addEventListener('click', () => {
+                aiResponseContainer.classList.add('hidden');
+                aiResponseContainer.innerHTML = '';
+                showScreen('mainMenu');
+            });
             historianBackToMenuBtn.addEventListener('click', () => showScreen('mainMenu'));
             
             flashcardContainer.addEventListener('click', () => {
