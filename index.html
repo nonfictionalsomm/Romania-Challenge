@@ -669,7 +669,7 @@
 
                 showModal('🤖 Generating AI Response...', '<div class="flex justify-center items-center"><div class="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-400"></div></div>', false);
 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                 
                 try {
                     const response = await fetch(apiUrl, {
